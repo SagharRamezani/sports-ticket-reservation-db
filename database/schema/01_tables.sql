@@ -215,3 +215,61 @@ CREATE TABLE otp_logs
     verified_at   TIMESTAMP,
     created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE features
+(
+    feature_id   BIGINT GENERATED ALWAYS AS IDENTITY,
+    feature_code VARCHAR(50)  NOT NULL,
+    feature_name VARCHAR(100) NOT NULL,
+    description  TEXT,
+    created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE ticket_features
+(
+    ticket_id  BIGINT    NOT NULL,
+    feature_id BIGINT    NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE football_details
+(
+    football_detail_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    ticket_id          BIGINT    NOT NULL,
+    league_name        VARCHAR(150),
+    stadium_name       VARCHAR(150),
+    gate_number        VARCHAR(50),
+    stand_number       VARCHAR(50),
+    row_number         VARCHAR(30),
+    seat_number        VARCHAR(30),
+    ticket_type        VARCHAR(50),
+    created_at         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE volleyball_details
+(
+    volleyball_detail_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    ticket_id            BIGINT    NOT NULL,
+    league_name          VARCHAR(150),
+    hall_name            VARCHAR(150),
+    gate_number          VARCHAR(50),
+    stand_number         VARCHAR(50),
+    row_number           VARCHAR(30),
+    seat_number          VARCHAR(30),
+    ticket_type          VARCHAR(50),
+    created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE basketball_details
+(
+    basketball_detail_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    ticket_id            BIGINT    NOT NULL,
+    league_name          VARCHAR(150),
+    hall_name            VARCHAR(150),
+    gate_number          VARCHAR(50),
+    stand_number         VARCHAR(50),
+    row_number           VARCHAR(30),
+    seat_number          VARCHAR(30),
+    ticket_type          VARCHAR(50),
+    created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
