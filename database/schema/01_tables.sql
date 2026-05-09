@@ -6,11 +6,6 @@
 -- Database: PostgreSQL
 -- ============================================================
 
--- ============================================================
--- Step 1: Core identity, location, sport, venue, team, and match tables
--- Commit: db: add core identity location and match tables
--- ============================================================
-
 CREATE TABLE roles
 (
     role_id     BIGINT GENERATED ALWAYS AS IDENTITY,
@@ -87,4 +82,40 @@ CREATE TABLE matches
     match_status     VARCHAR(30)  NOT NULL DEFAULT 'SCHEDULED',
     created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP
+);
+
+CREATE TABLE ticket_categories
+(
+    ticket_category_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    category_code      VARCHAR(50)  NOT NULL,
+    category_name      VARCHAR(100) NOT NULL,
+    description        TEXT,
+    created_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tickets
+(
+    ticket_id          BIGINT GENERATED ALWAYS AS IDENTITY,
+    match_id           BIGINT         NOT NULL,
+    ticket_category_id BIGINT         NOT NULL,
+    section_name       VARCHAR(100),
+    row_number         VARCHAR(30),
+    seat_number        VARCHAR(30),
+    price              NUMERIC(12, 2) NOT NULL,
+    ticket_status      VARCHAR(30)    NOT NULL DEFAULT 'AVAILABLE',
+    created_at         TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP
+);
+
+CREATE TABLE reservations
+(
+    reservation_id      BIGINT GENERATED ALWAYS AS IDENTITY,
+    user_id             BIGINT      NOT NULL,
+    ticket_id           BIGINT      NOT NULL,
+    reservation_status  VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    reserved_at         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at          TIMESTAMP   NOT NULL,
+    confirmed_at        TIMESTAMP,
+    cancelled_at        TIMESTAMP,
+    cancellation_reason TEXT
 );
