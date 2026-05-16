@@ -429,3 +429,187 @@ The most important schema improvements are:
 5. Avoid duplicate general data in sport-specific detail tables.
 6. Clarify whether `tickets` means physical seats or inventory groups.
 7. Use controlled values for status columns.
+
+# Final Phase 1 Checklist
+
+This checklist is used to verify the phase 1 database design before final review and merge.
+
+---
+
+## Entity Checklist
+
+- [ ] `roles` table exists.
+- [ ] `users` table exists.
+- [ ] `users` references `roles`.
+- [ ] `users` references `cities`.
+- [ ] `cities` table exists.
+- [ ] `venues` table exists.
+- [ ] `venues` references `cities`.
+- [ ] `sports` table exists.
+- [ ] `teams` table exists.
+- [ ] `teams` references `sports`.
+- [ ] `matches` table exists.
+- [ ] `matches` references `sports`.
+- [ ] `matches` references `venues`.
+- [ ] `matches` references home team and away team.
+- [ ] `ticket_categories` table exists.
+- [ ] `tickets` table exists.
+- [ ] `tickets` references `matches`.
+- [ ] `tickets` references `ticket_categories`.
+- [ ] `features` table exists.
+- [ ] `ticket_features` table exists.
+- [ ] `ticket_features` resolves the many-to-many relationship between `tickets` and `features`.
+- [ ] `reservations` table exists.
+- [ ] `reservations` references `users`.
+- [ ] `reservations` references `tickets`.
+- [ ] `payment_methods` table exists.
+- [ ] `payments` table exists.
+- [ ] `payments` references `reservations`.
+- [ ] `payments` references `payment_methods`.
+- [ ] `cancellation_policies` table exists.
+- [ ] `refunds` table exists.
+- [ ] `refunds` references `reservations`.
+- [ ] `report_categories` table exists.
+- [ ] `reports` table exists.
+- [ ] `reports` references `users`.
+- [ ] `reports` references `report_categories`.
+- [ ] `support_actions` table exists.
+- [ ] `support_actions` references support users.
+- [ ] `otp_logs` table exists if relational OTP logging is needed.
+- [ ] `football_details` references `tickets`.
+- [ ] `volleyball_details` references `tickets`.
+- [ ] `basketball_details` references `tickets`.
+
+---
+
+## Relationship Checklist
+
+- [ ] `roles 1 ---- * users`
+- [ ] `cities 1 ---- * users`
+- [ ] `cities 1 ---- * venues`
+- [ ] `sports 1 ---- * teams`
+- [ ] `sports 1 ---- * matches`
+- [ ] `venues 1 ---- * matches`
+- [ ] `teams 1 ---- * matches as home_team`
+- [ ] `teams 1 ---- * matches as away_team`
+- [ ] `matches 1 ---- * tickets`
+- [ ] `ticket_categories 1 ---- * tickets`
+- [ ] `tickets * ---- * features through ticket_features`
+- [ ] `users 1 ---- * reservations`
+- [ ] `tickets 1 ---- * reservations`
+- [ ] `reservations 1 ---- * payments`
+- [ ] `payment_methods 1 ---- * payments`
+- [ ] `reservations 1 ---- * refunds`
+- [ ] `users 1 ---- * reports`
+- [ ] `report_categories 1 ---- * reports`
+- [ ] `tickets 1 ---- * reports`
+- [ ] `reservations 1 ---- * reports`
+- [ ] `users 1 ---- * support_actions as support_user`
+- [ ] `reports 1 ---- * support_actions`
+- [ ] `reservations 1 ---- * support_actions`
+- [ ] `users 1 ---- * otp_logs`
+- [ ] `tickets 1 ---- 0..1 football_details`
+- [ ] `tickets 1 ---- 0..1 volleyball_details`
+- [ ] `tickets 1 ---- 0..1 basketball_details`
+
+---
+
+## 1NF Checklist
+
+- [ ] Each table has a primary key.
+- [ ] Each column stores atomic values.
+- [ ] There are no comma-separated values in columns.
+- [ ] There are no repeated columns such as `feature1`, `feature2`, `feature3`.
+- [ ] Home team and away team are stored separately.
+- [ ] Seat, row, section, and stand information are stored in separate fields.
+- [ ] Many-to-many relationships use junction tables.
+
+---
+
+## 2NF Checklist
+
+- [ ] All tables are already in 1NF.
+- [ ] Non-key attributes depend on the whole primary key.
+- [ ] Junction tables do not store data that depends only on one side of the relationship.
+- [ ] `ticket_features` does not store `feature_name`.
+- [ ] `ticket_features` does not store `ticket_price`.
+- [ ] Composite keys, if used, do not create partial dependency.
+
+---
+
+## 3NF Checklist
+
+- [ ] All tables are already in 2NF.
+- [ ] `users` does not store `role_name`.
+- [ ] `users` does not store `city_name`.
+- [ ] `venues` does not duplicate city/province data unnecessarily.
+- [ ] `matches` does not store team names as text.
+- [ ] `matches` does not store venue name as text.
+- [ ] `tickets` does not store sport name.
+- [ ] `tickets` does not store venue name.
+- [ ] `tickets` does not store match datetime if it already exists in `matches`.
+- [ ] `tickets` does not store category name directly.
+- [ ] `payments` does not store payment method name directly.
+- [ ] `reports` does not store report category name directly.
+- [ ] Sport-specific detail tables do not duplicate venue, sport, price, category, or match datetime.
+
+---
+
+## Constraint Checklist
+
+- [ ] `users.email` is unique if used.
+- [ ] `users.phone_number` is unique if used.
+- [ ] `users` has a rule that at least one of email or phone number must exist.
+- [ ] `roles.name` is unique.
+- [ ] `sports.name` is unique.
+- [ ] `ticket_categories.name` is unique.
+- [ ] `features.name` is unique.
+- [ ] `payment_methods.name` is unique.
+- [ ] `report_categories.name` is unique.
+- [ ] `matches.home_team_id <> matches.away_team_id`.
+- [ ] `tickets.price >= 0`.
+- [ ] `tickets.total_capacity >= 0`.
+- [ ] `tickets.remaining_capacity >= 0`.
+- [ ] `tickets.remaining_capacity <= tickets.total_capacity`.
+- [ ] `reservations.quantity > 0` if quantity exists.
+- [ ] `reservations.expires_at > reservations.reserved_at`.
+- [ ] `payments.amount >= 0`.
+- [ ] `refunds.amount >= 0`.
+- [ ] `ticket_features` has `PRIMARY KEY (ticket_id, feature_id)` or `UNIQUE (ticket_id, feature_id)`.
+- [ ] `football_details` has `UNIQUE (ticket_id)`.
+- [ ] `volleyball_details` has `UNIQUE (ticket_id)`.
+- [ ] `basketball_details` has `UNIQUE (ticket_id)`.
+
+---
+
+## Redundancy Checklist
+
+- [ ] Role names are not repeated inside `users`.
+- [ ] City names are not repeated inside `users` or `venues`.
+- [ ] Sport names are not repeated inside `matches` or `tickets`.
+- [ ] Team names are not repeated inside `matches` or `tickets`.
+- [ ] Venue names are not repeated inside `matches`, `tickets`, or sport-specific detail tables.
+- [ ] Ticket category names are not repeated inside `tickets`.
+- [ ] Payment method names are not repeated inside `payments`.
+- [ ] Report category names are not repeated inside `reports`.
+- [ ] Features are not stored as text, JSON, or comma-separated values inside `tickets`.
+
+---
+
+## Final Review Notes
+
+Before merging this branch, the following points should be confirmed with the schema owner:
+
+1. Whether `tickets` represents individual physical seats or inventory groups.
+2. Whether status fields use `CHECK` constraints or lookup tables.
+3. Whether sport-specific detail tables avoid duplicated general data.
+4. Whether all important relationships are visible in the ERD.
+5. Whether all suggested constraints are either implemented or intentionally postponed.
+
+---
+
+## Overall Phase 1 Review Result
+
+The proposed database design can satisfy 3NF if repeated names and derived attributes are avoided.
+
+The current review recommends using reference tables, foreign keys, junction tables, and check constraints to keep the schema consistent, normalized, and suitable for the next phases of the project.
