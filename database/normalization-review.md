@@ -613,3 +613,317 @@ Before merging this branch, the following points should be confirmed with the sc
 The proposed database design can satisfy 3NF if repeated names and derived attributes are avoided.
 
 The current review recommends using reference tables, foreign keys, junction tables, and check constraints to keep the schema consistent, normalized, and suitable for the next phases of the project.
+# Alignment Review After Saghar Schema Update
+
+This section reviews the current schema files provided by Saghar:
+
+- `database/schema/01_tables.sql`
+- `database/schema/02_constraints.sql`
+- `database/schema/03_indexes.sql`
+- `database/design-notes.md`
+
+This review does not directly modify Saghar's SQL files. It only records normalization and relationship observations.
+
+---
+
+## Confirmed Design Decisions
+
+### 1. Tickets represent individual reservable seats
+
+The current schema defines `tickets` with:
+
+- `section_name`
+- `row_number`
+- `seat_number`
+- `price`
+- `ticket_status`
+
+This means each row in `tickets` represents an individual reservable ticket or seat, not a capacity group.
+
+Review Result:
+This is clear and acceptable for phase 1.
+
+Normalization Impact:
+Because each ticket is individual, capacity fields such as `total_capacity` or `remaining_capacity` are not needed in `tickets`.
+
+Important Note:
+Reservation logic should ensure that one physical ticket cannot be sold to multiple users at the same time.
+
+Suggested Future Constraint:
+A partial unique index may be considered later to prevent multiple active reservations for the same ticket.
+
+Example idea for later phases:
+Only one reservation with status `PENDING` or `PAID` should exist for the same ticket at the same time.
+
+---
+
+### 2. Lookup tables are used correctly
+
+The schema uses lookup/reference tables for:
+
+- `roles`
+- `cities`
+- `sports`
+- `ticket_categories`
+- `payment_methods`
+- `report_categories`
+- `features`
+
+Review Result:
+This supports 3NF and avoids repeated display names in transactional tables.
+
+Examples:
+- `users.role_id` references `roles.role_id`
+- `users.city_id` references `cities.city_id`
+- `matches.sport_id` references `sports.sport_id`
+- `tickets.ticket_category_id` references `ticket_categories.ticket_category_id`
+- `payments.payment_method_id` references `payment_methods.payment_method_id`
+- `reports.report_category_id` references `report_categories.report_category_id`
+
+---
+
+### 3. Status fields use CHECK constraints
+
+Saghar's schema uses text status columns with `CHECK` constraints instead of separate status lookup tables.
+
+Examples:
+- `users.account_status`
+- `matches.match_status`
+- `tickets.ticket_status`
+- `reservations.reservation_status`
+- `payments.payment_status`
+- `refunds.refund_status`
+- `reports.report_status`
+- `otp_logs.otp_status`
+
+Review Result:
+This is acceptable for phase 1 because the allowed status values are controlled by constraints.
+
+Normalization Impact:
+Using CHECK constraints for limited fixed status values does not create major redundancy in this phase.
+
+---
+
+### 4. ticket_features is correctly modeled as a junction table
+
+The current schema uses:
+
+- `ticket_features.ticket_id`
+- `ticket_features.feature_id`
+- Primary key: `(ticket_id, feature_id)`
+
+Review Result:
+This correctly models the many-to-many relationship between `tickets` and `features`.
+
+Normalization Impact:
+This supports 1NF and 2NF because features are not stored as comma-separated values inside `tickets`.
+
+---
+
+### 5. Sport-specific detail tables are separated
+
+The schema includes:
+
+- `football_details`
+- `volleyball_details`
+- `basketball_details`
+
+Each table references `tickets` and has a unique constraint on `ticket_id`.
+
+Review Result:
+This supports 3NF by avoiding many nullable sport-specific columns in the main `tickets` table.
+
+Confirmed Constraints:
+- `uq_football_details_ticket`
+- `uq_volleyball_details_ticket`
+- `uq_basketball_details_ticket`
+
+---
+
+## Updated Normalization Observations
+
+### Observation 1: Some seat fields are duplicated between tickets and sport-specific detail tables
+
+Current schema stores seat-related fields in `tickets`:
+
+- `section_name`
+- `row_number`
+- `seat_number`
+
+Sport-specific detail tables also store similar fields:
+
+- `stand_number`
+- `row_number`
+- `seat_number`
+- `gate_number`
+
+Review:
+This may create redundancy if the same row and seat values are stored in both `tickets` and sport-specific detail tables.
+
+Reason:
+For individual tickets, general seat identity can usually stay in `tickets`. Sport-specific detail tables should only store fields that are truly specific to that sport.
+
+Suggested Fix:
+Keep general seat identity in `tickets`, and use sport-specific detail tables only for additional sport-specific attributes such as gate number, stand number, league name, or ticket type.
+
+Affected Tables:
+`tickets`, `football_details`, `volleyball_details`, `basketball_details`
+
+Priority:
+Medium
+
+---
+
+### Observation 2: stadium_name and hall_name may duplicate venues.venue_name
+
+Current schema includes:
+
+- `football_details.stadium_name`
+- `volleyball_details.hall_name`
+- `basketball_details.hall_name`
+
+Review:
+These fields may duplicate `venues.venue_name`, which is already reachable through:
+
+`detail -> ticket -> match -> venue`
+
+Reason:
+If stadium_name or hall_name is the same as the venue name, storing it again can violate 3NF and cause update anomalies.
+
+Suggested Fix:
+Remove these fields or use them only if they mean a sport-specific sub-location different from the actual venue.
+
+Affected Tables:
+`football_details`, `volleyball_details`, `basketball_details`, `venues`, `matches`, `tickets`
+
+Priority:
+Medium
+
+---
+
+### Observation 3: payments stores both reservation_id and user_id
+
+Current schema includes:
+
+- `payments.reservation_id`
+- `payments.user_id`
+
+Review:
+Since `reservation_id` already points to `reservations`, and `reservations` already has `user_id`, the payment user can be derived through:
+
+`payments -> reservations -> users`
+
+Reason:
+Keeping `payments.user_id` can be useful for faster queries, but it introduces possible redundancy if it does not match the reservation owner.
+
+Suggested Fix:
+Either:
+1. Remove `payments.user_id` and derive the user through reservation, or
+2. Keep it for query convenience but enforce consistency in application logic or with advanced database constraints/triggers later.
+
+Affected Tables:
+`payments`, `reservations`, `users`
+
+Priority:
+Low to Medium
+
+Phase 1 Decision:
+Acceptable if the team documents it as a deliberate denormalization for easier payment queries.
+
+---
+
+### Observation 4: cancellation_policies design is clear
+
+Current schema links cancellation policies to:
+
+- `match_id`
+- `ticket_category_id`
+
+Review:
+This is a good phase 1 design because cancellation rules can depend on both the match and ticket category.
+
+Normalization Impact:
+This avoids repeating penalty rules in tickets or reservations.
+
+Affected Tables:
+`cancellation_policies`, `matches`, `ticket_categories`
+
+Priority:
+No issue
+
+---
+
+### Observation 5: reports require reservation_id or ticket_id
+
+Current schema has this constraint:
+
+`reservation_id IS NOT NULL OR ticket_id IS NOT NULL`
+
+Review:
+This is useful because every report must be connected to at least one business object.
+
+Normalization Impact:
+This keeps report data meaningful and prevents orphan reports.
+
+Affected Tables:
+`reports`
+
+Priority:
+No issue
+
+---
+
+### Observation 6: support_actions require report_id or reservation_id
+
+Current schema has this constraint:
+
+`report_id IS NOT NULL OR reservation_id IS NOT NULL`
+
+Review:
+This is acceptable because support actions should be attached to a report or reservation.
+
+Affected Tables:
+`support_actions`
+
+Priority:
+No issue
+
+---
+
+### Observation 7: OTP code is stored as hash
+
+Current schema uses:
+
+- `otp_code_hash`
+
+Review:
+This is good from a security and design perspective. The raw OTP is not stored.
+
+Affected Tables:
+`otp_logs`
+
+Priority:
+No issue
+
+---
+
+## Final Updated Review Result
+
+After reviewing Saghar's schema files, the design is mostly consistent with 3NF and phase 1 requirements.
+
+Strong points:
+- Lookup/reference tables are used well.
+- Primary keys and foreign keys are separated into `02_constraints.sql`.
+- CHECK constraints are used for status values and valid numeric/date values.
+- `ticket_features` correctly resolves a many-to-many relationship.
+- Sport-specific detail tables are separated from `tickets`.
+- OTP logs store hashed OTP values.
+
+Main remaining review notes:
+1. Avoid duplicating `stadium_name` or `hall_name` if they are the same as `venues.venue_name`.
+2. Avoid duplicating `row_number` and `seat_number` between `tickets` and sport-specific detail tables unless there is a clear reason.
+3. Decide whether `payments.user_id` is intentional denormalization or should be derived through `reservation_id`.
+4. Since tickets are individual seats, later logic should prevent multiple active reservations for the same ticket.
+
+Overall:
+The current schema is acceptable for phase 1, with a few documented improvement suggestions for Saghar.
