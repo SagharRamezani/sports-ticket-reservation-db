@@ -165,3 +165,267 @@ Affected Tables:
 - [ ] Price and amount fields have non-negative constraints.
 - [ ] Reservation expiration time is after reservation time.
 - [ ] Sport-specific detail tables do not duplicate general ticket or match data.
+# Schema Improvement Suggestions for Schema Owner
+
+This section contains suggested improvements for the SQL schema owner.
+These are review notes only. The SQL schema file should not be changed directly by Sarina.
+
+---
+
+## Suggested Fix 1: Use foreign keys instead of repeated names
+
+Suggested Fix:
+Use foreign keys for lookup/reference data instead of storing repeated text values.
+
+Examples:
+- `users.role_id` instead of `users.role_name`
+- `users.city_id` instead of `users.city_name`
+- `venues.city_id` instead of `venues.city_name`
+- `matches.sport_id` instead of `matches.sport_name`
+- `payments.payment_method_id` instead of `payments.payment_method_name`
+- `reports.category_id` instead of `reports.category_name`
+
+Reason:
+Repeated text values may cause inconsistency and violate 3NF. Reference tables keep data consistent and reduce redundancy.
+
+Affected Tables:
+`users`, `venues`, `matches`, `payments`, `reports`, `roles`, `cities`, `sports`, `payment_methods`, `report_categories`
+
+---
+
+## Suggested Fix 2: Add unique constraints to lookup tables
+
+Suggested Fix:
+Add `UNIQUE` constraints to lookup/reference table names.
+
+Suggested Constraints:
+- `roles.name` should be unique.
+- `sports.name` should be unique.
+- `ticket_categories.name` should be unique.
+- `features.name` should be unique.
+- `payment_methods.name` should be unique.
+- `report_categories.name` should be unique.
+
+Reason:
+Lookup tables should not contain duplicate values. For example, having two rows for `VIP` or two rows for `football` can create inconsistent references.
+
+Affected Tables:
+`roles`, `sports`, `ticket_categories`, `features`, `payment_methods`, `report_categories`
+
+---
+
+## Suggested Fix 3: Add check constraints for numeric values
+
+Suggested Fix:
+Add check constraints to prevent invalid negative values.
+
+Suggested Constraints:
+- `tickets.price >= 0`
+- `tickets.total_capacity >= 0`
+- `tickets.remaining_capacity >= 0`
+- `tickets.remaining_capacity <= tickets.total_capacity`
+- `payments.amount >= 0`
+- `refunds.amount >= 0`
+
+Reason:
+Price, capacity, payment amount, and refund amount cannot be negative. Remaining capacity also cannot be greater than total capacity.
+
+Affected Tables:
+`tickets`, `payments`, `refunds`
+
+---
+
+## Suggested Fix 4: Add check constraint for reservation expiration
+
+Suggested Fix:
+Add a constraint to ensure that reservation expiration time is after reservation creation time.
+
+Suggested Constraint:
+`reservations.expires_at > reservations.reserved_at`
+
+Reason:
+A reservation cannot expire before it is created.
+
+Affected Tables:
+`reservations`
+
+---
+
+## Suggested Fix 5: Prevent a team from playing against itself
+
+Suggested Fix:
+Add a check constraint on the `matches` table.
+
+Suggested Constraint:
+`matches.home_team_id <> matches.away_team_id`
+
+Reason:
+A match should not have the same team as both home team and away team.
+
+Affected Tables:
+`matches`
+
+---
+
+## Suggested Fix 6: Use ticket_features as a junction table
+
+Suggested Fix:
+Use `ticket_features` to model the many-to-many relationship between tickets and features.
+
+Suggested Constraint:
+`PRIMARY KEY (ticket_id, feature_id)`
+
+Reason:
+A ticket can have multiple features, and one feature can belong to multiple tickets. This should not be stored as comma-separated text or repeated columns.
+
+Affected Tables:
+`tickets`, `features`, `ticket_features`
+
+---
+
+## Suggested Fix 7: Avoid duplicate data in sport-specific detail tables
+
+Suggested Fix:
+Do not repeat general ticket, match, venue, sport, or category information in sport-specific detail tables.
+
+Avoid storing:
+- `venue_name`
+- `sport_name`
+- `ticket_category_name`
+- `match_datetime`
+- `price`
+
+Reason:
+These values can already be reached through existing relationships:
+
+`football_details -> tickets -> matches -> venues`
+`football_details -> tickets -> matches -> sports`
+`football_details -> tickets -> ticket_categories`
+
+The same logic applies to volleyball and basketball details.
+
+Affected Tables:
+`football_details`, `volleyball_details`, `basketball_details`, `tickets`, `matches`, `venues`, `sports`, `ticket_categories`
+
+---
+
+## Suggested Fix 8: Add unique ticket constraint to sport-specific detail tables
+
+Suggested Fix:
+Add `UNIQUE (ticket_id)` to each sport-specific detail table.
+
+Reason:
+Each ticket should have at most one football, volleyball, or basketball detail record.
+
+Affected Tables:
+`football_details`, `volleyball_details`, `basketball_details`
+
+---
+
+## Suggested Fix 9: Clarify the meaning of tickets
+
+Suggested Fix:
+The team should decide whether the `tickets` table represents:
+
+1. Individual physical seats/tickets
+2. Ticket inventory groups by match, category, section, and capacity
+
+Reason:
+This decision affects the design of reservations, quantity, capacity, and seat-specific details.
+
+If `tickets` means individual physical seats:
+- Each ticket should have only one successful reservation.
+- `quantity` in reservations may not be needed.
+- Seat number should probably be unique per match/section.
+
+If `tickets` means inventory groups:
+- `quantity` in reservations is useful.
+- `total_capacity` and `remaining_capacity` are useful.
+- Multiple reservations can reference the same ticket record.
+
+Recommendation:
+For phase 1, using `tickets` as inventory groups by match/category/section is simpler and better aligned with capacity management.
+
+Affected Tables:
+`tickets`, `reservations`, `football_details`, `volleyball_details`, `basketball_details`
+
+---
+
+## Suggested Fix 10: Add email or phone requirement for users
+
+Suggested Fix:
+Add a check constraint to ensure that each user has at least one login/contact method.
+
+Suggested Constraint:
+`email IS NOT NULL OR phone_number IS NOT NULL`
+
+Reason:
+The system supports login and OTP using email or phone number, so at least one of them should exist.
+
+Affected Tables:
+`users`
+
+---
+
+## Suggested Fix 11: Use controlled values for status columns
+
+Suggested Fix:
+Use `CHECK` constraints or separate lookup tables for status fields.
+
+Suggested Status Values:
+
+For reservations:
+- `reserved`
+- `paid`
+- `canceled`
+- `expired`
+
+For payments:
+- `pending`
+- `successful`
+- `failed`
+- `refunded`
+
+For reports:
+- `pending`
+- `in_review`
+- `resolved`
+- `rejected`
+
+For refunds:
+- `pending`
+- `processed`
+- `failed`
+
+Reason:
+Unrestricted text status fields can cause inconsistent values such as `success`, `successful`, `done`, or `paid_successfully`.
+
+Affected Tables:
+`reservations`, `payments`, `reports`, `refunds`
+
+---
+
+## Suggested Fix 12: Keep OTP codes secure
+
+Suggested Fix:
+Do not store raw OTP codes in the relational database. If OTP logging is needed, store only metadata or hashed OTP values.
+
+Reason:
+Raw OTP codes are sensitive authentication data. Active OTP validation can be handled later by Redis, while the relational table can keep only audit metadata.
+
+Affected Tables:
+`otp_logs`
+
+---
+
+# Summary of Suggestions
+
+The most important schema improvements are:
+
+1. Use foreign keys instead of repeated names.
+2. Add unique constraints to lookup tables.
+3. Add check constraints for price, capacity, amount, and reservation expiration.
+4. Use `ticket_features` for the many-to-many relationship between tickets and features.
+5. Avoid duplicate general data in sport-specific detail tables.
+6. Clarify whether `tickets` means physical seats or inventory groups.
+7. Use controlled values for status columns.
