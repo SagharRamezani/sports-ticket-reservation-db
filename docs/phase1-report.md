@@ -528,6 +528,318 @@ The main relationships in the ERD are:
 
 ---
 
+
+
+## Detailed Relationship and Cardinality Notes
+
+This section expands the ERD relationship design and explains the cardinalities used in the diagram.
+
+### Identity and Location Relationships
+
+#### roles to users
+
+Cardinality:
+
+`roles 1 ---- * users`
+
+Explanation:
+
+Each user has one role, while each role can be assigned to many users. This supports both normal users and support users without creating separate user tables.
+
+#### cities to users
+
+Cardinality:
+
+`cities 1 ---- * users`
+
+Explanation:
+
+Each user may belong to one city, while each city can have many users.
+
+#### cities to venues
+
+Cardinality:
+
+`cities 1 ---- * venues`
+
+Explanation:
+
+Each venue is located in one city, while each city can contain many venues.
+
+#### cities to teams
+
+Cardinality:
+
+`cities 1 ---- * teams`
+
+Explanation:
+
+Each team can optionally be associated with one city, while one city can be associated with many teams.
+
+---
+
+### Sport, Team, and Match Relationships
+
+#### sports to teams
+
+Cardinality:
+
+`sports 1 ---- * teams`
+
+Explanation:
+
+Each team belongs to one sport, while one sport can have many teams.
+
+#### sports to matches
+
+Cardinality:
+
+`sports 1 ---- * matches`
+
+Explanation:
+
+Each match belongs to one sport, while one sport can have many matches.
+
+#### venues to matches
+
+Cardinality:
+
+`venues 1 ---- * matches`
+
+Explanation:
+
+Each match is held in one venue, while one venue can host many matches over time.
+
+#### teams to matches
+
+Cardinality:
+
+`teams 1 ---- * matches as home_team`
+
+`teams 1 ---- * matches as away_team`
+
+Explanation:
+
+The `matches` table has two separate foreign keys for teams: `home_team_id` and `away_team_id`. These should be shown as two separate relationships in the ERD.
+
+Design note:
+
+The schema allows team fields to be nullable, which helps support events where teams are not yet known or not applicable.
+
+---
+
+### Ticket and Reservation Relationships
+
+#### matches to tickets
+
+Cardinality:
+
+`matches 1 ---- * tickets`
+
+Explanation:
+
+Each ticket belongs to one match, while each match can have many individual reservable tickets or seats.
+
+#### ticket_categories to tickets
+
+Cardinality:
+
+`ticket_categories 1 ---- * tickets`
+
+Explanation:
+
+Each ticket belongs to one ticket category, while each category can be used by many tickets.
+
+#### users to reservations
+
+Cardinality:
+
+`users 1 ---- * reservations`
+
+Explanation:
+
+Each reservation is made by one user, while each user can create many reservations.
+
+#### tickets to reservations
+
+Cardinality:
+
+`tickets 1 ---- * reservations`
+
+Explanation:
+
+Each reservation is related to one ticket. A ticket can have many reservation records over time, but business rules should prevent multiple active successful reservations for the same ticket.
+
+---
+
+### Payment, Refund, and Cancellation Relationships
+
+#### reservations to payments
+
+Cardinality:
+
+`reservations 1 ---- * payments`
+
+Explanation:
+
+Each payment belongs to one reservation, while one reservation can have multiple payment attempts.
+
+#### users to payments
+
+Cardinality:
+
+`users 1 ---- * payments`
+
+Explanation:
+
+The current schema stores `user_id` in payments, so the ERD shows a direct relationship between users and payments. The user can also be reached through `payments -> reservations -> users`.
+
+#### payment_methods to payments
+
+Cardinality:
+
+`payment_methods 1 ---- * payments`
+
+Explanation:
+
+Each payment uses one payment method, while each payment method can be used by many payments.
+
+#### matches and ticket_categories to cancellation_policies
+
+Cardinality:
+
+`matches 1 ---- * cancellation_policies`
+
+`ticket_categories 1 ---- * cancellation_policies`
+
+Explanation:
+
+Cancellation rules can depend on both the match and ticket category.
+
+#### reservations and payments to refunds
+
+Cardinality:
+
+`reservations 1 ---- * refunds`
+
+`payments 1 ---- * refunds`
+
+Explanation:
+
+A refund is connected to both the reservation and the related payment. This keeps refund information separate from the original payment transaction.
+
+---
+
+### Reports and Support Relationships
+
+#### users to reports
+
+Cardinality:
+
+`users 1 ---- * reports`
+
+Explanation:
+
+Each report is submitted by one user, while one user can submit many reports.
+
+#### report_categories to reports
+
+Cardinality:
+
+`report_categories 1 ---- * reports`
+
+Explanation:
+
+Each report belongs to one category, while one category can be used by many reports.
+
+#### reservations and tickets to reports
+
+Cardinality:
+
+`reservations 1 ---- * reports`
+
+`tickets 1 ---- * reports`
+
+Explanation:
+
+A report can be related to a reservation or a ticket. The schema requires at least one related object.
+
+#### reports and reservations to support_actions
+
+Cardinality:
+
+`reports 1 ---- * support_actions`
+
+`reservations 1 ---- * support_actions`
+
+Explanation:
+
+Support actions can be connected to reports or reservations. This allows the support team to record multiple actions over time.
+
+#### users to support_actions
+
+Cardinality:
+
+`users 1 ---- * support_actions as support_user`
+
+Explanation:
+
+A support action is performed by one support user. The support role is determined through the user's role.
+
+---
+
+### OTP, Feature, and Sport-Specific Detail Relationships
+
+#### users to otp_logs
+
+Cardinality:
+
+`users 1 ---- * otp_logs`
+
+Explanation:
+
+Each user can have multiple OTP log records. The user relationship is nullable because OTP may be requested before signup or using only an email or phone number.
+
+#### tickets to features through ticket_features
+
+Cardinality:
+
+`tickets * ---- * features through ticket_features`
+
+Explanation:
+
+Tickets and features have a many-to-many relationship. The `ticket_features` table is an associative entity that converts this many-to-many relationship into two one-to-many relationships.
+
+#### tickets to sport-specific details
+
+Cardinality:
+
+`tickets 1 ---- 0..1 football_details`
+
+`tickets 1 ---- 0..1 volleyball_details`
+
+`tickets 1 ---- 0..1 basketball_details`
+
+Explanation:
+
+Each ticket can have zero or one sport-specific detail row depending on the sport of the related match.
+
+---
+
+## ERD Drawing Notes
+
+The ERD uses these drawing decisions:
+
+- Entity names are written clearly inside rectangles.
+- Important attributes are listed inside each entity.
+- Primary keys are marked with `PK`.
+- Foreign keys are marked with `FK`.
+- `ticket_features` is shown as an associative entity.
+- The relationship between `teams` and `matches` is drawn twice: once for home team and once for away team.
+- Sport-specific detail tables are shown as optional one-to-one extensions of `tickets`.
+- Report and support relationships are shown as nullable/optional where the schema allows optional references.
+
+
 ## Normalization Summary
 
 The schema is designed to be close to third normal form.
