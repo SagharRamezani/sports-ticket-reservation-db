@@ -17,60 +17,61 @@ public class TicketController {
     }
 
     public void listTickets(HttpExchange exchange) throws IOException {
-        String responseJson = ticketService.listTickets();
-        JsonResponse.ok(exchange, responseJson);
+        String response = ticketService.listTickets();
+        JsonResponse.ok(exchange, response);
     }
 
     public void searchTickets(HttpExchange exchange) throws IOException {
-        String responseJson = searchService.searchTickets(exchange.getRequestURI().getRawQuery());
-        JsonResponse.ok(exchange, responseJson);
+        String rawQuery = exchange.getRequestURI().getRawQuery();
+        String response = searchService.searchTickets(rawQuery);
+        JsonResponse.ok(exchange, response);
     }
 
     public void getTicketDetail(HttpExchange exchange) throws IOException {
-        long ticketId = extractLastPathLong(exchange, "ticketId");
-        String responseJson = ticketService.getTicketDetail(ticketId);
-        JsonResponse.ok(exchange, responseJson);
+        long ticketId = readIdFromPath(exchange, "/api/tickets/");
+        String response = ticketService.getTicketDetail(ticketId);
+        JsonResponse.ok(exchange, response);
     }
 
     public void listCities(HttpExchange exchange) throws IOException {
-        String responseJson = ticketService.listCities();
-        JsonResponse.ok(exchange, responseJson);
+        String response = ticketService.listCities();
+        JsonResponse.ok(exchange, response);
     }
 
     public void listVenues(HttpExchange exchange) throws IOException {
-        String responseJson = ticketService.listVenues();
-        JsonResponse.ok(exchange, responseJson);
+        String response = ticketService.listVenues();
+        JsonResponse.ok(exchange, response);
     }
 
-    private long extractLastPathLong(HttpExchange exchange, String parameterName) {
+    private long readIdFromPath(HttpExchange exchange, String prefix) {
         String path = exchange.getRequestURI().getPath();
 
-        if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException("Missing path parameter: " + parameterName);
+        if (path == null || !path.startsWith(prefix)) {
+            throw new IllegalArgumentException("Invalid ticket path");
         }
 
-        String[] parts = path.split("/");
-        String lastPart = "";
+        String value = path.substring(prefix.length()).trim();
 
-        for (int i = parts.length - 1; i >= 0; i--) {
-            if (parts[i] != null && !parts[i].isBlank()) {
-                lastPart = parts[i];
-                break;
-            }
+        int slashIndex = value.indexOf("/");
+
+        if (slashIndex >= 0) {
+            value = value.substring(0, slashIndex);
         }
 
-        if (lastPart.isBlank()) {
-            throw new IllegalArgumentException("Missing path parameter: " + parameterName);
+        if (value.isBlank()) {
+            throw new IllegalArgumentException("Ticket id is required");
         }
 
         try {
-            long value = Long.parseLong(lastPart);
-            if (value <= 0) {
-                throw new IllegalArgumentException("Invalid path parameter: " + parameterName);
+            long id = Long.parseLong(value);
+
+            if (id <= 0) {
+                throw new IllegalArgumentException("Ticket id must be positive");
             }
-            return value;
+
+            return id;
         } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Invalid path parameter: " + parameterName);
+            throw new IllegalArgumentException("Ticket id must be a valid number");
         }
     }
 }

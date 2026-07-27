@@ -8,7 +8,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TicketRepository {
     public List<TicketResult> findAvailableTickets() {
@@ -54,6 +56,55 @@ public class TicketRepository {
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("Could not load ticket detail", ex);
+        }
+    }
+
+    public List<TicketResult> findTicketsByIds(List<Long> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return List.of();
+        }
+
+        StringBuilder placeholders = new StringBuilder();
+
+        for (int i = 0; i < ticketIds.size(); i++) {
+            if (i > 0) {
+                placeholders.append(",");
+            }
+
+            placeholders.append("?");
+        }
+
+        String sql = baseTicketSelect()
+                + " WHERE t.ticket_id IN (" + placeholders + ")";
+
+        Map<Long, TicketResult> ticketsById = new LinkedHashMap<>();
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (int i = 0; i < ticketIds.size(); i++) {
+                statement.setLong(i + 1, ticketIds.get(i));
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    TicketResult ticket = mapTicket(resultSet);
+                    ticketsById.put(ticket.ticketId(), ticket);
+                }
+            }
+
+            List<TicketResult> orderedTickets = new ArrayList<>();
+
+            for (Long ticketId : ticketIds) {
+                TicketResult ticket = ticketsById.get(ticketId);
+
+                if (ticket != null) {
+                    orderedTickets.add(ticket);
+                }
+            }
+
+            return orderedTickets;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Could not load Elasticsearch ticket results from SQL", ex);
         }
     }
 
