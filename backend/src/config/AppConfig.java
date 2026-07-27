@@ -20,12 +20,28 @@ public final class AppConfig {
         return getEnv("DB_PASSWORD", "postgres");
     }
 
+    public static String getDbDriverClassName() {
+        return getEnv("DB_DRIVER_CLASS_NAME", "org.postgresql.Driver");
+    }
+
+    public static int getDbLoginTimeoutSeconds() {
+        return getIntEnv("DB_LOGIN_TIMEOUT_SECONDS", 10);
+    }
+
     public static String getJwtSecret() {
         return getEnv("JWT_SECRET", "change-this-secret-in-local-env");
     }
 
+    public static int getJwtExpirationMinutes() {
+        return getIntEnv("JWT_EXPIRATION_MINUTES", 120);
+    }
+
     public static int getReservationTtlMinutes() {
         return getIntEnv("RESERVATION_TTL_MINUTES", 10);
+    }
+
+    public static int getOtpTtlMinutes() {
+        return getIntEnv("OTP_TTL_MINUTES", 5);
     }
 
     private static String getEnv(String key, String defaultValue) {
