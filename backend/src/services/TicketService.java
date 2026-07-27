@@ -2,7 +2,9 @@ package services;
 
 import http.JsonResponse;
 import repositories.TicketRepository;
+import repositories.TicketRepository.CityResult;
 import repositories.TicketRepository.TicketResult;
+import repositories.TicketRepository.VenueResult;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -46,6 +48,42 @@ public class TicketService {
                 + "}";
     }
 
+    public String listCities() {
+        List<CityResult> cities = ticketRepository.findCities();
+
+        StringBuilder json = new StringBuilder();
+        json.append("{\"success\":true,\"data\":[");
+
+        for (int i = 0; i < cities.size(); i++) {
+            if (i > 0) {
+                json.append(",");
+            }
+
+            json.append(buildCityJson(cities.get(i)));
+        }
+
+        json.append("],\"count\":").append(cities.size()).append("}");
+        return json.toString();
+    }
+
+    public String listVenues() {
+        List<VenueResult> venues = ticketRepository.findVenues();
+
+        StringBuilder json = new StringBuilder();
+        json.append("{\"success\":true,\"data\":[");
+
+        for (int i = 0; i < venues.size(); i++) {
+            if (i > 0) {
+                json.append(",");
+            }
+
+            json.append(buildVenueJson(venues.get(i)));
+        }
+
+        json.append("],\"count\":").append(venues.size()).append("}");
+        return json.toString();
+    }
+
     private String buildTicketJson(TicketResult ticket) {
         return "{"
                 + "\"ticketId\":" + ticket.ticketId() + ","
@@ -74,6 +112,28 @@ public class TicketService {
                 + "\"teams\":{"
                 + "\"homeTeamName\":\"" + JsonResponse.escape(ticket.homeTeamName()) + "\","
                 + "\"awayTeamName\":\"" + JsonResponse.escape(ticket.awayTeamName()) + "\""
+                + "}"
+                + "}";
+    }
+
+    private String buildCityJson(CityResult city) {
+        return "{"
+                + "\"cityId\":" + city.cityId() + ","
+                + "\"cityName\":\"" + JsonResponse.escape(city.cityName()) + "\","
+                + "\"province\":\"" + JsonResponse.escape(city.province()) + "\","
+                + "\"activeVenueCount\":" + city.activeVenueCount()
+                + "}";
+    }
+
+    private String buildVenueJson(VenueResult venue) {
+        return "{"
+                + "\"venueId\":" + venue.venueId() + ","
+                + "\"venueName\":\"" + JsonResponse.escape(venue.venueName()) + "\","
+                + "\"address\":\"" + JsonResponse.escape(venue.address()) + "\","
+                + "\"capacity\":" + venue.capacity() + ","
+                + "\"city\":{"
+                + "\"cityId\":" + nullableLong(venue.cityId()) + ","
+                + "\"cityName\":\"" + JsonResponse.escape(venue.cityName()) + "\""
                 + "}"
                 + "}";
     }

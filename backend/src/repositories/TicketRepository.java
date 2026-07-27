@@ -125,6 +125,78 @@ public class TicketRepository {
         }
     }
 
+    public List<CityResult> findCities() {
+        String sql = """
+                SELECT
+                    c.city_id,
+                    c.city_name,
+                    COALESCE(c.province, '') AS province,
+                    COUNT(v.venue_id) AS active_venue_count
+                FROM cities c
+                LEFT JOIN venues v ON c.city_id = v.city_id
+                GROUP BY c.city_id, c.city_name, c.province
+                ORDER BY c.city_name ASC
+                """;
+
+        List<CityResult> cities = new ArrayList<>();
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                cities.add(new CityResult(
+                        resultSet.getLong("city_id"),
+                        resultSet.getString("city_name"),
+                        resultSet.getString("province"),
+                        resultSet.getLong("active_venue_count")
+                ));
+            }
+
+            return cities;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Could not load cities", ex);
+        }
+    }
+
+    public List<VenueResult> findVenues() {
+        String sql = """
+                SELECT
+                    v.venue_id,
+                    v.venue_name,
+                    COALESCE(v.address, '') AS address,
+                    COALESCE(v.capacity, 0) AS capacity,
+                    c.city_id,
+                    c.city_name
+                FROM venues v
+                LEFT JOIN cities c ON v.city_id = c.city_id
+                ORDER BY c.city_name ASC, v.venue_name ASC
+                """;
+
+        List<VenueResult> venues = new ArrayList<>();
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                long cityIdValue = resultSet.getLong("city_id");
+                Long cityId = resultSet.wasNull() ? null : cityIdValue;
+
+                venues.add(new VenueResult(
+                        resultSet.getLong("venue_id"),
+                        resultSet.getString("venue_name"),
+                        resultSet.getString("address"),
+                        resultSet.getInt("capacity"),
+                        cityId,
+                        resultSet.getString("city_name")
+                ));
+            }
+
+            return venues;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Could not load venues", ex);
+        }
+    }
+
     private String baseTicketSelect() {
         return """
                 SELECT
@@ -241,6 +313,24 @@ public class TicketRepository {
             String cityName,
             String homeTeamName,
             String awayTeamName
+    ) {
+    }
+
+    public record CityResult(
+            long cityId,
+            String cityName,
+            String province,
+            long activeVenueCount
+    ) {
+    }
+
+    public record VenueResult(
+            long venueId,
+            String venueName,
+            String address,
+            int capacity,
+            Long cityId,
+            String cityName
     ) {
     }
 }

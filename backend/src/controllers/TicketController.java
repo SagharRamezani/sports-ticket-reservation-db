@@ -32,6 +32,16 @@ public class TicketController {
         JsonResponse.ok(exchange, responseJson);
     }
 
+    public void listCities(HttpExchange exchange) throws IOException {
+        String responseJson = ticketService.listCities();
+        JsonResponse.ok(exchange, responseJson);
+    }
+
+    public void listVenues(HttpExchange exchange) throws IOException {
+        String responseJson = ticketService.listVenues();
+        JsonResponse.ok(exchange, responseJson);
+    }
+
     private long extractLastPathLong(HttpExchange exchange, String parameterName) {
         String path = exchange.getRequestURI().getPath();
 
