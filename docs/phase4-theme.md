@@ -35,6 +35,20 @@ The selected mode is saved in localStorage:
 sports_ticket_theme_mode
 ```
 
+## Visual Polish
+
+The theme CSS improves:
+
+```text
+Dark-mode contrast
+Hero section readability
+Card contrast
+Muted text readability
+Button contrast
+Debug/API response readability
+Navbar theme control styling
+```
+
 ## Notes
 
 This feature only changes frontend presentation.

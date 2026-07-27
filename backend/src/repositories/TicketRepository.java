@@ -270,7 +270,7 @@ public class TicketRepository {
                     away_team.team_name AS away_team_name
                 FROM tickets t
                 JOIN ticket_categories tc ON t.ticket_category_id = tc.ticket_category_id
-                JOIN matches m ON tc.match_id = m.match_id
+                JOIN matches m ON t.match_id = m.match_id
                 LEFT JOIN sports s ON m.sport_id = s.sport_id
                 LEFT JOIN venues v ON m.venue_id = v.venue_id
                 LEFT JOIN cities c ON v.city_id = c.city_id
