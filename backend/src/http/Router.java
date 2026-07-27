@@ -4,7 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Router implements HttpHandler {
@@ -13,7 +13,7 @@ public class Router implements HttpHandler {
         void handle(HttpExchange exchange) throws IOException;
     }
 
-    private final Map<String, RouteHandler> routes = new HashMap<>();
+    private final Map<String, RouteHandler> routes = new LinkedHashMap<>();
 
     public void get(String path, RouteHandler handler) {
         add("GET", path, handler);
@@ -46,7 +46,8 @@ public class Router implements HttpHandler {
 
         String method = exchange.getRequestMethod().toUpperCase();
         String path = normalizePath(exchange.getRequestURI().getPath());
-        RouteHandler handler = routes.get(routeKey(method, path));
+
+        RouteHandler handler = findHandler(method, path);
 
         if (handler == null) {
             JsonResponse.notFound(exchange, "Route not found: " + method + " " + path);
@@ -61,6 +62,58 @@ public class Router implements HttpHandler {
             ex.printStackTrace();
             JsonResponse.serverError(exchange, "Internal server error");
         }
+    }
+
+    private RouteHandler findHandler(String method, String path) {
+        RouteHandler exactHandler = routes.get(routeKey(method, path));
+
+        if (exactHandler != null) {
+            return exactHandler;
+        }
+
+        for (Map.Entry<String, RouteHandler> route : routes.entrySet()) {
+            String routeKey = route.getKey();
+
+            if (!routeKey.startsWith(method + " ")) {
+                continue;
+            }
+
+            String routePath = routeKey.substring(method.length() + 1);
+
+            if (matches(routePath, path)) {
+                return route.getValue();
+            }
+        }
+
+        return null;
+    }
+
+    private boolean matches(String routePath, String requestPath) {
+        String[] routeParts = routePath.split("/");
+        String[] requestParts = requestPath.split("/");
+
+        if (routeParts.length != requestParts.length) {
+            return false;
+        }
+
+        for (int i = 0; i < routeParts.length; i++) {
+            String routePart = routeParts[i];
+            String requestPart = requestParts[i];
+
+            if (routePart.startsWith("{") && routePart.endsWith("}")) {
+                if (requestPart == null || requestPart.isBlank()) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (!routePart.equals(requestPart)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private String routeKey(String method, String path) {
