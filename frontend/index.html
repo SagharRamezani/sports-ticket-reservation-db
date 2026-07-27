@@ -1,23 +1,154 @@
-<!DOCTYPE html>
-<html lang="fa">
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sports Ticket Reservation</title>
     <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/ui-polish.css">
+  <link rel="stylesheet" href="css/theme.css">
 </head>
 <body>
-<main class="container">
-    <h1>Sports Ticket Reservation</h1>
-    <p>سامانه رزرو و خرید بلیط مسابقات ورزشی</p>
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="index.html">
+            <span class="brand-mark">ST</span>
+            <span>Sports Tickets</span>
+        </a>
 
-    <nav>
-        <a href="login.html">ورود / ثبت‌نام</a>
-        <a href="tickets.html">جستجوی بلیط</a>
-        <a href="bookings.html">رزروهای من</a>
-        <a href="admin.html">پنل پشتیبان</a>
-    </nav>
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="index.html" class="active">Home</a>
+            <a href="tickets.html">Tickets</a>
+            <a href="bookings.html">Bookings</a>
+            <a href="profile.html">Profile</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-outline" href="login.html">Login</a>
+            <button class="btn btn-ghost" id="logoutButton" type="button">Logout</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-copy">
+                <p class="eyebrow">Phase 4 Frontend Demo</p>
+                <h1>Reserve and manage sports match tickets easily.</h1>
+                <p class="hero-text">
+                    Search matches, filter tickets, reserve seats, complete local payment,
+                    manage bookings, and submit support reports through a simple web UI.
+                </p>
+
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="tickets.html">Search Tickets</a>
+                    <a class="btn btn-secondary" href="login.html">Login / Signup</a>
+                </div>
+            </div>
+
+            <div class="hero-card">
+                <div class="status-pill">API Ready</div>
+                <h2>Demo Flow</h2>
+                <ol class="flow-list">
+                    <li>Login or signup</li>
+                    <li>Search tickets by city, sport, team, and price</li>
+                    <li>Open ticket details</li>
+                    <li>Reserve and pay locally</li>
+                    <li>Track bookings and cancellation penalty</li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="section-heading">
+                <p class="eyebrow">Main Features</p>
+                <h2>Frontend pages for phase 4</h2>
+            </div>
+
+            <div class="card-grid">
+                <article class="feature-card">
+                    <h3>Authentication</h3>
+                    <p>Login, signup, request OTP, and verify OTP using backend APIs.</p>
+                    <a href="login.html">Open auth page</a>
+                </article>
+
+                <article class="feature-card">
+                    <h3>Ticket Search</h3>
+                    <p>Use Elasticsearch-backed search API with SQL fallback support.</p>
+                    <a href="tickets.html">Open tickets page</a>
+                </article>
+
+                <article class="feature-card">
+                    <h3>Bookings</h3>
+                    <p>View reservations, payment status, cancellation penalty, and refund flow.</p>
+                    <a href="bookings.html">Open bookings page</a>
+                </article>
+
+                <article class="feature-card">
+                    <h3>Support Admin</h3>
+                    <p>Review user reports and update report status in the admin panel.</p>
+                    <a href="admin.html">Open admin page</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section-muted">
+        <div class="container split-panel">
+            <div>
+                <p class="eyebrow">Backend connection</p>
+                <h2>Current API base URL</h2>
+                <p>
+                    The frontend uses <code>frontend/js/api.js</code> as the single access point
+                    for backend requests.
+                </p>
+            </div>
+
+            <div class="api-box">
+                <span class="label">API_BASE_URL</span>
+                <code id="apiBaseUrlText">http://localhost:8080</code>
+                <button class="btn btn-outline" id="healthCheckButton" type="button">Check Health</button>
+                <pre id="healthCheckResult" class="result-box">Not checked yet.</pre>
+            </div>
+        </div>
+    </section>
 </main>
 
+<footer class="site-footer">
+    <div class="container footer-content">
+        <p>Sports Ticket Reservation System - Database Project Phase 4</p>
+        <p>HTML / CSS / Vanilla JavaScript</p>
+    </div>
+</footer>
+
 <script src="js/api.js"></script>
+<script>
+    document.getElementById("apiBaseUrlText").textContent = window.ApiClient.getBaseUrl();
+
+    document.getElementById("healthCheckButton").addEventListener("click", async function () {
+        const resultBox = document.getElementById("healthCheckResult");
+        resultBox.textContent = "Checking...";
+
+        try {
+            const result = await window.ApiClient.get("/api/health", { useMockOnError: false });
+            resultBox.textContent = JSON.stringify(result, null, 2);
+        } catch (error) {
+            resultBox.textContent = "Backend is not reachable: " + error.message;
+        }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", function () {
+        window.ApiClient.clearToken();
+        window.location.href = "login.html";
+    });
+</script>
+  <script src="js/ui-polish.js"></script>
+  <script src="js/theme.js"></script>
 </body>
 </html>
+
+

@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Reports - Sports Tickets</title>
+    <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/ui-polish.css">
+  <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="index.html">
+            <span class="brand-mark">ST</span>
+            <span>Sports Tickets</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="tickets.html">Tickets</a>
+            <a href="bookings.html">Bookings</a>
+            <a href="profile.html">Profile</a>
+            <a href="admin.html" class="active">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-outline" href="login.html">Login</a>
+            <button class="btn btn-ghost" id="logoutButton" type="button">Logout</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="page-header">
+        <div class="container">
+            <p class="eyebrow">Admin / Support</p>
+            <h1>Report management dashboard</h1>
+            <p>Load user reports and update their status through the phase 3 admin APIs.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div id="adminMessage" class="alert hidden"></div>
+
+            <section class="panel">
+                <div class="split-panel" style="grid-template-columns: minmax(0, 1fr) auto;">
+                    <div>
+                        <p class="eyebrow">Reports</p>
+                        <h2 id="adminTitle">Support reports</h2>
+                        <p id="adminMeta">Use the button to load reports from backend or mock fallback.</p>
+                    </div>
+
+                    <div class="inline-actions">
+                        <button class="btn btn-primary" id="loadReportsButton" type="button">Load reports</button>
+                        <button class="btn btn-secondary" id="loadMockReportsButton" type="button">Load mock reports</button>
+                    </div>
+                </div>
+
+                <div id="reportsList" class="admin-grid" style="margin-top: 18px;"></div>
+            </section>
+
+            <section class="panel">
+                <p class="eyebrow">Update Report</p>
+                <h2>Manual status update</h2>
+                <p>
+                    This form calls:
+                    <code>PATCH /api/admin/reports/{id}</code>
+                </p>
+
+                <form id="updateReportForm">
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <label for="reportId">Report ID</label>
+                            <input id="reportId" name="reportId" type="number" min="1" placeholder="Report ID" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="reportStatus">Status</label>
+                            <select id="reportStatus" name="reportStatus">
+                                <option value="OPEN">OPEN</option>
+                                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                                <option value="RESOLVED">RESOLVED</option>
+                                <option value="REJECTED">REJECTED</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="adminNote">Admin note</label>
+                            <input id="adminNote" name="adminNote" type="text" placeholder="Support note">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="assignedTo">Assigned to</label>
+                            <input id="assignedTo" name="assignedTo" type="text" placeholder="support-admin">
+                        </div>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 16px;">
+                        <button class="btn btn-primary" type="submit">Update report</button>
+                        <button class="btn btn-outline" id="resetUpdateFormButton" type="button">Reset form</button>
+                    </div>
+                </form>
+
+                <pre id="adminActionResult" class="result-box">No admin action yet.</pre>
+            </section>
+
+            <section class="panel">
+                <p class="eyebrow">Demo Notes</p>
+                <h2>Frontend-only admin page</h2>
+                <ul class="flow-list">
+                    <li>This page does not change backend code.</li>
+                    <li>If admin authorization fails, login with an admin/support user first.</li>
+                    <li>If backend is unavailable, mock reports are shown for screenshots.</li>
+                    <li>CORS or route issues should be reported to Saghar during integration.</li>
+                </ul>
+            </section>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-content">
+        <p>Sports Ticket Reservation System - Database Project Phase 4</p>
+        <p>Admin UI by Shamim</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/admin.js"></script>
+  <script src="js/ui-polish.js"></script>
+  <script src="js/theme.js"></script>
+</body>
+</html>
+
+

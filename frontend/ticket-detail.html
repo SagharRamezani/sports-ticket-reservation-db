@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Detail - Sports Tickets</title>
+    <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/ui-polish.css">
+  <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="index.html">
+            <span class="brand-mark">ST</span>
+            <span>Sports Tickets</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="tickets.html">Tickets</a>
+            <a href="bookings.html">Bookings</a>
+            <a href="profile.html">Profile</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-outline" href="login.html">Login</a>
+            <button class="btn btn-ghost" id="logoutButton" type="button">Logout</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="page-header">
+        <div class="container">
+            <p class="eyebrow">Ticket Detail</p>
+            <h1 id="pageTitle">Ticket details</h1>
+            <p>Review ticket information, reserve the seat, and continue to payment.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div id="detailMessage" class="alert hidden"></div>
+
+            <div class="split-panel">
+                <section class="panel">
+                    <p class="eyebrow">Selected Ticket</p>
+                    <div id="ticketDetailBox">
+                        <div class="alert">Loading ticket details...</div>
+                    </div>
+                </section>
+
+                <aside class="panel" id="reserve">
+                    <p class="eyebrow">Reservation</p>
+                    <h2>Reserve this ticket</h2>
+                    <p>
+                        The reservation request calls:
+                        <code>POST /api/tickets/{id}/reserve</code>
+                    </p>
+
+                    <div class="form-row">
+                        <label for="reservationNote">Reservation note</label>
+                        <textarea id="reservationNote" placeholder="Optional note for demo"></textarea>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 16px;">
+                        <button class="btn btn-primary" id="reserveButton" type="button">Reserve ticket</button>
+                        <a class="btn btn-outline" href="tickets.html">Back to search</a>
+                    </div>
+
+                    <div id="reservationResult" class="result-box" style="margin-top: 16px;">No reservation yet.</div>
+                </aside>
+            </div>
+
+            <section class="panel">
+                <p class="eyebrow">Payment</p>
+                <h2>Complete payment</h2>
+                <p>
+                    After a reservation is created, payment calls:
+                    <code>POST /api/reservations/{id}/pay</code>
+                </p>
+
+                <div class="form-grid">
+                    <div class="form-row">
+                        <label for="reservationIdInput">Reservation ID</label>
+                        <input id="reservationIdInput" type="number" min="1" placeholder="Reservation ID">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="paymentMethod">Payment method</label>
+                        <select id="paymentMethod">
+                            <option value="CARD">Card</option>
+                            <option value="WALLET">Wallet</option>
+                            <option value="MOCK">Mock payment</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="paymentTrackingCode">Tracking code</label>
+                        <input id="paymentTrackingCode" type="text" placeholder="TRX-12345">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="paymentAmount">Amount</label>
+                        <input id="paymentAmount" type="number" min="0" placeholder="1500000">
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="payButton" type="button">Pay reservation</button>
+                    <button class="btn btn-outline" id="fillPaymentButton" type="button">Fill from ticket</button>
+                </div>
+
+                <div id="paymentResult" class="result-box" style="margin-top: 16px;">No payment yet.</div>
+            </section>
+
+            <section class="panel">
+                <p class="eyebrow">Report Problem</p>
+                <h2>Submit a ticket report</h2>
+                <p>
+                    This section prepares the UI for:
+                    <code>POST /api/reports</code>
+                </p>
+
+                <form id="reportForm">
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <label for="reportTitle">Title</label>
+                            <input id="reportTitle" name="reportTitle" type="text" placeholder="Issue with reservation">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="reportCategory">Category</label>
+                            <select id="reportCategory" name="reportCategory">
+                                <option value="PAYMENT">Payment</option>
+                                <option value="RESERVATION">Reservation</option>
+                                <option value="TICKET">Ticket</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="reportReservationId">Reservation ID</label>
+                            <input id="reportReservationId" name="reservationId" type="number" min="1" placeholder="Optional">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="reportTicketId">Ticket ID</label>
+                            <input id="reportTicketId" name="ticketId" type="number" min="1" placeholder="Ticket ID">
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-top: 14px;">
+                        <label for="reportText">Description</label>
+                        <textarea id="reportText" name="reportText" placeholder="Describe the problem"></textarea>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 16px;">
+                        <button class="btn btn-secondary" type="submit">Submit report</button>
+                    </div>
+                </form>
+
+                <div id="reportResult" class="result-box" style="margin-top: 16px;">No report submitted.</div>
+            </section>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-content">
+        <p>Sports Ticket Reservation System - Database Project Phase 4</p>
+        <p>Ticket Detail and Reservation UI by Shamim</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/reservations.js"></script>
+  <script src="js/ui-polish.js"></script>
+  <script src="js/theme.js"></script>
+</body>
+</html>
+
+

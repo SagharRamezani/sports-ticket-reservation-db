@@ -1,0 +1,140 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Tickets - Sports Tickets</title>
+    <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/ui-polish.css">
+  <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="index.html">
+            <span class="brand-mark">ST</span>
+            <span>Sports Tickets</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="tickets.html" class="active">Tickets</a>
+            <a href="bookings.html">Bookings</a>
+            <a href="profile.html">Profile</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-outline" href="login.html">Login</a>
+            <button class="btn btn-ghost" id="logoutButton" type="button">Logout</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="page-header">
+        <div class="container">
+            <p class="eyebrow">Ticket Search</p>
+            <h1>Find available sports match tickets</h1>
+            <p>Search by sport, city, venue, team, category, price range, or match date.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="panel">
+                <form id="ticketSearchForm">
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <label for="sport">Sport</label>
+                            <input id="sport" name="sport" type="text" placeholder="Football">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="city">City</label>
+                            <input id="city" name="city" type="text" placeholder="Tehran">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="venue">Venue</label>
+                            <input id="venue" name="venue" type="text" placeholder="Azadi Stadium">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="team">Team</label>
+                            <input id="team" name="team" type="text" placeholder="Esteghlal">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="category">Category</label>
+                            <select id="category" name="category">
+                                <option value="">All categories</option>
+                                <option value="VIP">VIP</option>
+                                <option value="SPECIAL">Special</option>
+                                <option value="NORMAL">Normal</option>
+                                <option value="ECONOMY">Economy</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="min_price">Min price</label>
+                            <input id="min_price" name="min_price" type="number" min="0" placeholder="300000">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="max_price">Max price</label>
+                            <input id="max_price" name="max_price" type="number" min="0" placeholder="2000000">
+                        </div>
+
+                        <div class="form-row">
+                            <label for="match_date">Match date</label>
+                            <input id="match_date" name="match_date" type="date">
+                        </div>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 18px;">
+                        <button class="btn btn-primary" type="submit">Search tickets</button>
+                        <button class="btn btn-outline" type="button" id="resetSearchButton">Reset</button>
+                        <button class="btn btn-secondary" type="button" id="loadMockTicketsButton">Load mock tickets</button>
+                    </div>
+                </form>
+
+                <div id="searchMessage" class="alert hidden"></div>
+            </div>
+
+            <div class="panel">
+                <div class="split-panel" style="grid-template-columns: minmax(0, 1fr) auto;">
+                    <div>
+                        <p class="eyebrow">Results</p>
+                        <h2 id="resultTitle">Available tickets</h2>
+                        <p id="resultMeta">Search results will appear here.</p>
+                    </div>
+
+                    <div class="api-box" style="box-shadow: none; min-width: 230px;">
+                        <span class="label">Search source</span>
+                        <strong id="searchSource">Not searched yet</strong>
+                    </div>
+                </div>
+
+                <div id="ticketResults" class="ticket-grid" style="margin-top: 18px;"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-content">
+        <p>Sports Ticket Reservation System - Database Project Phase 4</p>
+        <p>Ticket Search UI by Shamim</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/tickets.js"></script>
+  <script src="js/ui-polish.js"></script>
+  <script src="js/theme.js"></script>
+</body>
+</html>
+
+
