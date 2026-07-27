@@ -1,6 +1,6 @@
 -- ============================================================
 -- 01_tables.sql
--- Phase 1 - Initial table definitions
+-- Phase 2 - Final PostgreSQL table definitions
 -- Project: Sports Match Ticket Reservation System
 -- Owner: Saghar
 -- Database: PostgreSQL
