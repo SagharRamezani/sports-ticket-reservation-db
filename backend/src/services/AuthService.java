@@ -1,5 +1,6 @@
 package services;
 
+import config.AppConfig;
 import http.JsonResponse;
 import repositories.UserRepository;
 import repositories.UserRepository.AuthUserResult;
@@ -7,7 +8,15 @@ import repositories.UserRepository.CreateUserRequest;
 import security.JwtUtil;
 import security.PasswordHasher;
 
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class AuthService {
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Map<String, OtpRecord> OTP_STORE = new ConcurrentHashMap<>();
+
     private final UserRepository userRepository;
 
     public AuthService() {
@@ -72,6 +81,77 @@ public class AuthService {
         return buildAuthResponse("Login completed successfully", user, token);
     }
 
+    public String requestOtp(String requestBody) {
+        String identifier = readStringField(requestBody, "identifier");
+
+        if (identifier == null || identifier.isBlank()) {
+            throw new IllegalArgumentException("Email or phone number is required");
+        }
+
+        String normalizedIdentifier = identifier.trim();
+
+        AuthUserResult user = userRepository.findAuthUserByEmailOrPhone(normalizedIdentifier);
+        if (!user.active()) {
+            throw new IllegalArgumentException("User account is inactive");
+        }
+
+        String otpCode = generateOtpCode();
+        long expiresAt = Instant.now().getEpochSecond() + (long) AppConfig.getOtpTtlMinutes() * 60L;
+
+        OTP_STORE.put(normalizedIdentifier, new OtpRecord(otpCode, expiresAt));
+
+        return "{"
+                + "\"success\":true,"
+                + "\"message\":\"OTP generated successfully. Sending SMS/email is mocked in this phase.\","
+                + "\"data\":{"
+                + "\"identifier\":\"" + JsonResponse.escape(normalizedIdentifier) + "\","
+                + "\"mockOtp\":\"" + JsonResponse.escape(otpCode) + "\","
+                + "\"ttlMinutes\":" + AppConfig.getOtpTtlMinutes() + ","
+                + "\"expiresAt\":" + expiresAt
+                + "}"
+                + "}";
+    }
+
+    public String verifyOtp(String requestBody) {
+        String identifier = readStringField(requestBody, "identifier");
+        String otpCode = readStringField(requestBody, "otpCode");
+
+        if (identifier == null || identifier.isBlank()) {
+            throw new IllegalArgumentException("Email or phone number is required");
+        }
+
+        if (otpCode == null || otpCode.isBlank()) {
+            throw new IllegalArgumentException("OTP code is required");
+        }
+
+        String normalizedIdentifier = identifier.trim();
+        OtpRecord otpRecord = OTP_STORE.get(normalizedIdentifier);
+
+        if (otpRecord == null) {
+            throw new IllegalArgumentException("OTP was not requested or has expired");
+        }
+
+        if (Instant.now().getEpochSecond() > otpRecord.expiresAt()) {
+            OTP_STORE.remove(normalizedIdentifier);
+            throw new IllegalArgumentException("OTP has expired");
+        }
+
+        if (!otpRecord.code().equals(otpCode.trim())) {
+            throw new IllegalArgumentException("OTP code is invalid");
+        }
+
+        OTP_STORE.remove(normalizedIdentifier);
+
+        AuthUserResult user = userRepository.findAuthUserByEmailOrPhone(normalizedIdentifier);
+        if (!user.active()) {
+            throw new IllegalArgumentException("User account is inactive");
+        }
+
+        String token = JwtUtil.generateToken(user.userId(), user.roleCode());
+
+        return buildAuthResponse("OTP verified successfully", user, token);
+    }
+
     private void validateSignup(
             String firstName,
             String lastName,
@@ -128,6 +208,11 @@ public class AuthService {
         }
 
         return value.trim();
+    }
+
+    private String generateOtpCode() {
+        int number = SECURE_RANDOM.nextInt(1_000_000);
+        return String.format("%06d", number);
     }
 
     private String readStringField(String json, String fieldName) {
@@ -216,5 +301,8 @@ public class AuthService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private record OtpRecord(String code, long expiresAt) {
     }
 }
