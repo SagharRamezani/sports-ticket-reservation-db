@@ -14,7 +14,7 @@
 --    and/or tickets with ticket_status = 'CANCELLED'.
 -- 3. Queries 18 to 21 are destructive or data-changing queries.
 --    Run them only on a test database or inside a transaction.
--- 4. Because each physical ticket is usually sold only once, Query 16
+-- 4. Because each physical ticket is usually sold once, Query 16
 --    interprets "best-selling ticket" as "best-selling ticket category".
 
 -- ============================================================
@@ -166,7 +166,7 @@ RETURNING
 
 BEGIN;
 
-CREATE TEMP TABLE tmp_redington_cancelled_tickets AS
+CREATE TEMP TABLE tmp_redington_cancelled_tickets ON COMMIT DROP AS
 SELECT DISTINCT
     t.ticket_id
 FROM users u
@@ -180,14 +180,14 @@ WHERE u.last_name = 'Redington'
         OR t.ticket_status = 'CANCELLED'
       );
 
-CREATE TEMP TABLE tmp_redington_cancelled_reservations AS
+CREATE TEMP TABLE tmp_redington_cancelled_reservations ON COMMIT DROP AS
 SELECT DISTINCT
     r.reservation_id
 FROM reservations r
 JOIN tmp_redington_cancelled_tickets tt
     ON tt.ticket_id = r.ticket_id;
 
-CREATE TEMP TABLE tmp_redington_cancelled_payments AS
+CREATE TEMP TABLE tmp_redington_cancelled_payments ON COMMIT DROP AS
 SELECT DISTINCT
     p.payment_id
 FROM payments p
@@ -276,7 +276,7 @@ COMMIT;
 
 BEGIN;
 
-CREATE TEMP TABLE tmp_all_cancelled_tickets AS
+CREATE TEMP TABLE tmp_all_cancelled_tickets ON COMMIT DROP AS
 SELECT DISTINCT
     t.ticket_id
 FROM tickets t
@@ -285,14 +285,14 @@ LEFT JOIN reservations r
 WHERE t.ticket_status = 'CANCELLED'
    OR r.reservation_status = 'CANCELLED';
 
-CREATE TEMP TABLE tmp_all_cancelled_reservations AS
+CREATE TEMP TABLE tmp_all_cancelled_reservations ON COMMIT DROP AS
 SELECT DISTINCT
     r.reservation_id
 FROM reservations r
 JOIN tmp_all_cancelled_tickets tt
     ON tt.ticket_id = r.ticket_id;
 
-CREATE TEMP TABLE tmp_all_cancelled_payments AS
+CREATE TEMP TABLE tmp_all_cancelled_payments ON COMMIT DROP AS
 SELECT DISTINCT
     p.payment_id
 FROM payments p
@@ -387,17 +387,13 @@ FROM reservations r
 JOIN payments p
     ON p.reservation_id = r.reservation_id
 JOIN matches m
-    ON m.match_id = (
-        SELECT t2.match_id
-        FROM tickets t2
-        WHERE t2.ticket_id = r.ticket_id
-    )
+    ON m.match_id = t.match_id
 JOIN venues v
     ON v.venue_id = m.venue_id
 WHERE t.ticket_id = r.ticket_id
   AND r.reservation_status = 'PAID'
   AND p.payment_status = 'SUCCESS'
-  AND p.paid_at::DATE = CURRENT_DATE - INTERVAL '1 day'
+  AND p.paid_at::DATE = CURRENT_DATE - 1
   AND LOWER(v.venue_name) = LOWER('Azadi Stadium')
 RETURNING
     t.ticket_id,

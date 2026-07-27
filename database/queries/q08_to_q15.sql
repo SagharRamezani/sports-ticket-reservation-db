@@ -7,7 +7,7 @@
 -- ============================================================
 
 -- Notes:
--- 1. These queries assume that successful purchases are represented by:
+-- 1. Successful purchases are represented by:
 --    reservations.reservation_status = 'PAID'
 --    payments.payment_status = 'SUCCESS'
 -- 2. Payment time is based on payments.paid_at.

@@ -65,7 +65,7 @@ BEGIN
         ou.user_id AS other_user_id,
         ou.first_name AS other_first_name,
         ou.last_name AS other_last_name,
-        COALESCE(ou.email, ou.phone_number) AS other_contact_info,
+        COALESCE(ou.email, ou.phone_number)::VARCHAR AS other_contact_info,
         ou.account_status AS other_account_status
     FROM base_user bu
     JOIN cities c
@@ -78,9 +78,8 @@ BEGIN
 END;
 $$;
 
--- Test examples:
+-- Test example:
 -- SELECT * FROM fn_get_users_from_same_city('ali.ahmadi@example.com');
--- SELECT * FROM fn_get_users_from_same_city('09120000001');
 
 -- ============================================================
 -- Procedure 6 / Function 6
@@ -111,11 +110,11 @@ BEGIN
         u.user_id,
         u.first_name,
         u.last_name,
-        COALESCE(u.email, u.phone_number) AS contact_info,
+        COALESCE(u.email, u.phone_number)::VARCHAR AS contact_info,
         COUNT(DISTINCT r.reservation_id) AS purchased_ticket_count,
         SUM(p.amount) AS total_paid_amount,
-        MIN(p.paid_at) AS first_purchase_at,
-        MAX(p.paid_at) AS last_purchase_at
+        MIN(p.paid_at)::TIMESTAMP AS first_purchase_at,
+        MAX(p.paid_at)::TIMESTAMP AS last_purchase_at
     FROM users u
     JOIN reservations r
         ON r.user_id = u.user_id
@@ -138,7 +137,7 @@ END;
 $$;
 
 -- Test example:
--- SELECT * FROM fn_get_top_buyers_after_date(CURRENT_DATE - INTERVAL '7 days', 3);
+-- SELECT * FROM fn_get_top_buyers_after_date((CURRENT_DATE - INTERVAL '7 days')::DATE, 3);
 
 -- ============================================================
 -- Procedure 7 / Function 7
@@ -174,13 +173,13 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        r.cancelled_at,
+        r.cancelled_at::TIMESTAMP,
         r.reservation_id,
         t.ticket_id,
         u.user_id,
         u.first_name,
         u.last_name,
-        COALESCE(u.email, u.phone_number) AS contact_info,
+        COALESCE(u.email, u.phone_number)::VARCHAR AS contact_info,
         s.sport_name,
         m.match_title,
         v.venue_name,
@@ -218,9 +217,8 @@ BEGIN
 END;
 $$;
 
--- Test examples:
+-- Test example:
 -- SELECT * FROM fn_get_cancelled_tickets_by_sport('Football');
--- SELECT * FROM fn_get_cancelled_tickets_by_sport('Basketball');
 
 -- ============================================================
 -- Procedure 8 / Function 8
@@ -254,7 +252,7 @@ BEGIN
             u.user_id AS reporter_user_id,
             u.first_name,
             u.last_name,
-            COALESCE(u.email, u.phone_number) AS contact_info,
+            COALESCE(u.email, u.phone_number)::VARCHAR AS contact_info,
             COUNT(r.report_id) AS report_count,
             DENSE_RANK() OVER (
                 PARTITION BY rc.report_category_id
@@ -293,6 +291,5 @@ BEGIN
 END;
 $$;
 
--- Test examples:
+-- Test example:
 -- SELECT * FROM fn_get_top_reporters_by_category('Payment Issue');
--- SELECT * FROM fn_get_top_reporters_by_category('SEAT_ISSUE');
