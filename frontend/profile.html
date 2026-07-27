@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Sports Tickets</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="index.html">
+            <span class="brand-mark">ST</span>
+            <span>Sports Tickets</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="tickets.html">Tickets</a>
+            <a href="bookings.html">Bookings</a>
+            <a href="profile.html" class="active">Profile</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-outline" href="login.html">Login</a>
+            <button class="btn btn-ghost" id="logoutButton" type="button">Logout</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="page-header">
+        <div class="container">
+            <p class="eyebrow">User Profile</p>
+            <h1>Manage your account</h1>
+            <p>View and update your profile using the phase 3 user APIs.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div id="profileMessage" class="alert hidden"></div>
+
+            <div class="split-panel">
+                <section class="panel">
+                    <p class="eyebrow">Current User</p>
+                    <h2>Profile information</h2>
+
+                    <form id="profileForm">
+                        <div class="form-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                            <div class="form-row">
+                                <label for="firstName">First name</label>
+                                <input id="firstName" name="firstName" type="text" placeholder="First name">
+                            </div>
+
+                            <div class="form-row">
+                                <label for="lastName">Last name</label>
+                                <input id="lastName" name="lastName" type="text" placeholder="Last name">
+                            </div>
+
+                            <div class="form-row">
+                                <label for="email">Email</label>
+                                <input id="email" name="email" type="email" placeholder="user@example.com">
+                            </div>
+
+                            <div class="form-row">
+                                <label for="phoneNumber">Phone number</label>
+                                <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="09120000000">
+                            </div>
+
+                            <div class="form-row">
+                                <label for="cityId">City ID</label>
+                                <input id="cityId" name="cityId" type="number" min="1" placeholder="1">
+                            </div>
+
+                            <div class="form-row">
+                                <label for="profileImageUrl">Profile image URL</label>
+                                <input id="profileImageUrl" name="profileImageUrl" type="url" placeholder="https://...">
+                            </div>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 16px;">
+                            <button class="btn btn-primary" type="submit">Update profile</button>
+                            <button class="btn btn-outline" id="reloadProfileButton" type="button">Reload profile</button>
+                            <button class="btn btn-secondary" id="fillMockProfileButton" type="button">Fill mock profile</button>
+                        </div>
+                    </form>
+                </section>
+
+                <aside class="panel">
+                    <p class="eyebrow">Session</p>
+                    <h2>Local auth state</h2>
+                    <pre id="profileSessionBox" class="result-box">Loading session...</pre>
+
+                    <div class="inline-actions" style="margin-top: 16px;">
+                        <a class="btn btn-outline" href="bookings.html">View bookings</a>
+                        <button class="btn btn-danger" id="clearProfileSessionButton" type="button">Clear session</button>
+                    </div>
+                </aside>
+            </div>
+
+            <section class="panel">
+                <p class="eyebrow">API Response</p>
+                <h2>Latest profile response</h2>
+                <pre id="profileResultBox" class="result-box">No API response yet.</pre>
+            </section>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-content">
+        <p>Sports Ticket Reservation System - Database Project Phase 4</p>
+        <p>Profile UI by Shamim</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/profile.js"></script>
+</body>
+</html>
