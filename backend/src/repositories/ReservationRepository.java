@@ -292,7 +292,7 @@ public class ReservationRepository {
         }
     }
 
-    public int cleanupExpiredReservations() {
+    public ExpiredReservationCleanupResult cleanupExpiredReservations() {
         String selectExpiredTicketsSql = """
                 SELECT ticket_id
                 FROM reservations
@@ -317,15 +317,29 @@ public class ReservationRepository {
                   AND ticket_status = 'RESERVED'
                 """;
 
+        String cancelPendingPaymentsSql = """
+                UPDATE payments
+                SET payment_status = 'CANCELLED'
+                WHERE reservation_id = ANY (?)
+                  AND payment_status = 'PENDING'
+                """;
+
         try (Connection connection = Database.getConnection()) {
             connection.setAutoCommit(false);
 
             try {
                 List<Long> ticketIds = new ArrayList<>();
+                List<Long> reservationIds = new ArrayList<>();
 
-                try (PreparedStatement statement = connection.prepareStatement(selectExpiredTicketsSql);
+                try (PreparedStatement statement = connection.prepareStatement("""
+                        SELECT reservation_id, ticket_id
+                        FROM reservations
+                        WHERE reservation_status = 'PENDING'
+                          AND expires_at < CURRENT_TIMESTAMP
+                        """);
                      ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
+                        reservationIds.add(resultSet.getLong("reservation_id"));
                         ticketIds.add(resultSet.getLong("ticket_id"));
                     }
                 }
@@ -335,16 +349,30 @@ public class ReservationRepository {
                     expiredCount = statement.executeUpdate();
                 }
 
+                int releasedTicketCount = 0;
                 if (!ticketIds.isEmpty()) {
                     Array ticketIdArray = connection.createArrayOf("BIGINT", ticketIds.toArray());
                     try (PreparedStatement statement = connection.prepareStatement(releaseTicketsSql)) {
                         statement.setArray(1, ticketIdArray);
-                        statement.executeUpdate();
+                        releasedTicketCount = statement.executeUpdate();
+                    }
+                }
+
+                int cancelledPendingPaymentCount = 0;
+                if (!reservationIds.isEmpty()) {
+                    Array reservationIdArray = connection.createArrayOf("BIGINT", reservationIds.toArray());
+                    try (PreparedStatement statement = connection.prepareStatement(cancelPendingPaymentsSql)) {
+                        statement.setArray(1, reservationIdArray);
+                        cancelledPendingPaymentCount = statement.executeUpdate();
                     }
                 }
 
                 connection.commit();
-                return expiredCount;
+                return new ExpiredReservationCleanupResult(
+                        expiredCount,
+                        releasedTicketCount,
+                        cancelledPendingPaymentCount
+                );
             } catch (Exception ex) {
                 connection.rollback();
                 throw ex;
@@ -493,6 +521,13 @@ public class ReservationRepository {
             boolean refundCreated,
             BigDecimal refundAmount,
             BigDecimal penaltyAmount
+    ) {
+    }
+
+    public record ExpiredReservationCleanupResult(
+            int expiredReservationCount,
+            int releasedTicketCount,
+            int cancelledPendingPaymentCount
     ) {
     }
 

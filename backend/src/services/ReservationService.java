@@ -4,6 +4,7 @@ import http.JsonResponse;
 import repositories.ReservationRepository;
 import repositories.ReservationRepository.CancelReservationResult;
 import repositories.ReservationRepository.CancellationPenalty;
+import repositories.ReservationRepository.ExpiredReservationCleanupResult;
 import repositories.ReservationRepository.ReservationResult;
 
 import java.math.BigDecimal;
@@ -99,13 +100,15 @@ public class ReservationService {
     }
 
     public String cleanupExpiredReservations() {
-        int expiredCount = reservationRepository.cleanupExpiredReservations();
+        ExpiredReservationCleanupResult result = reservationRepository.cleanupExpiredReservations();
 
         return "{"
                 + "\"success\":true,"
                 + "\"message\":\"Expired reservations cleaned up successfully\","
                 + "\"data\":{"
-                + "\"expiredReservationCount\":" + expiredCount
+                + "\"expiredReservationCount\":" + result.expiredReservationCount() + ","
+                + "\"releasedTicketCount\":" + result.releasedTicketCount() + ","
+                + "\"cancelledPendingPaymentCount\":" + result.cancelledPendingPaymentCount()
                 + "}"
                 + "}";
     }
