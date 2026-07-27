@@ -1,0 +1,223 @@
+/* Phase 4 theme system: light / dark / auto by local time.
+   Presentation-only polish. No backend/API logic is changed. */
+
+:root {
+  color-scheme: light;
+  --theme-bg: #f3f6fb;
+  --theme-bg-soft: #eef4ff;
+  --theme-surface: #ffffff;
+  --theme-surface-2: #f8fafc;
+  --theme-text: #0f172a;
+  --theme-muted: #5b6b84;
+  --theme-border: #dbe4f0;
+  --theme-primary: #2563eb;
+  --theme-primary-soft: #dbeafe;
+  --theme-success-bg: #dcfce7;
+  --theme-success-text: #166534;
+  --theme-danger: #dc2626;
+  --theme-code-bg: #0f172a;
+  --theme-code-text: #e5edff;
+  --theme-shadow: 0 22px 60px rgba(15, 23, 42, 0.10);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --theme-bg: #0b1120;
+  --theme-bg-soft: #111827;
+  --theme-surface: #111827;
+  --theme-surface-2: #172033;
+  --theme-text: #e5edff;
+  --theme-muted: #a7b4ca;
+  --theme-border: #26364f;
+  --theme-primary: #60a5fa;
+  --theme-primary-soft: #1e3a5f;
+  --theme-success-bg: #123524;
+  --theme-success-text: #8ef3b3;
+  --theme-danger: #f87171;
+  --theme-code-bg: #030712;
+  --theme-code-text: #dbeafe;
+  --theme-shadow: 0 24px 70px rgba(0, 0, 0, 0.40);
+}
+
+html,
+body {
+  background: var(--theme-bg) !important;
+  color: var(--theme-text) !important;
+}
+
+body,
+main,
+.page,
+.hero,
+section {
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+header,
+nav,
+.navbar,
+.site-header,
+.topbar,
+.card,
+.panel,
+.section-card,
+form,
+article,
+details,
+.api-response-details,
+.debug-details,
+.integration-notes {
+  background: var(--theme-surface) !important;
+  color: var(--theme-text) !important;
+  border-color: var(--theme-border) !important;
+}
+
+.card,
+.panel,
+.section-card,
+form,
+article {
+  box-shadow: var(--theme-shadow);
+}
+
+p,
+small,
+label,
+.footer,
+footer,
+.meta,
+.muted,
+.subtitle,
+.description,
+.phase4-page-note {
+  color: var(--theme-muted) !important;
+}
+
+input,
+select,
+textarea {
+  background: var(--theme-surface) !important;
+  color: var(--theme-text) !important;
+  border-color: var(--theme-border) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--theme-muted) !important;
+}
+
+button,
+.btn,
+a.button {
+  border-color: var(--theme-border);
+}
+
+pre,
+code,
+.result-box,
+.response-box {
+  background: var(--theme-code-bg) !important;
+  color: var(--theme-code-text) !important;
+}
+
+.success,
+.alert-success,
+.message-success {
+  background: var(--theme-success-bg) !important;
+  color: var(--theme-success-text) !important;
+}
+
+.badge,
+.pill,
+.status,
+.phase4-status-pill {
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary);
+}
+
+a {
+  color: var(--theme-primary);
+}
+
+.theme-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.theme-control select {
+  width: auto;
+  min-width: 86px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.theme-control .theme-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.theme-control .theme-clock {
+  color: var(--theme-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.theme-toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9999;
+  max-width: 320px;
+  padding: 12px 14px;
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  box-shadow: var(--theme-shadow);
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html[data-theme="dark"] .hero,
+html[data-theme="dark"] .main-hero {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.22), transparent 34%),
+    linear-gradient(135deg, #0b1120 0%, #111827 100%) !important;
+}
+
+html[data-theme="dark"] img,
+html[data-theme="dark"] video {
+  opacity: 0.95;
+}
+
+@media (max-width: 760px) {
+  .theme-control {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .theme-control .theme-clock {
+    display: none;
+  }
+}
