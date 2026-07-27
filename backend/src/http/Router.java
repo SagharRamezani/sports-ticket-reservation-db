@@ -58,29 +58,31 @@ public class Router implements HttpHandler {
             handler.handle(exchange);
         } catch (IllegalArgumentException ex) {
             JsonResponse.badRequest(exchange, ex.getMessage());
+        } catch (SecurityException ex) {
+            JsonResponse.unauthorized(exchange, ex.getMessage());
         } catch (Exception ex) {
             ex.printStackTrace();
             JsonResponse.serverError(exchange, "Internal server error");
         }
     }
 
-    private RouteHandler findHandler(String method, String path) {
-        RouteHandler exactHandler = routes.get(routeKey(method, path));
+    private RouteHandler findHandler(String method, String requestPath) {
+        RouteHandler exactHandler = routes.get(routeKey(method, requestPath));
 
         if (exactHandler != null) {
             return exactHandler;
         }
 
         for (Map.Entry<String, RouteHandler> route : routes.entrySet()) {
-            String routeKey = route.getKey();
+            String key = route.getKey();
 
-            if (!routeKey.startsWith(method + " ")) {
+            if (!key.startsWith(method + " ")) {
                 continue;
             }
 
-            String routePath = routeKey.substring(method.length() + 1);
+            String routePath = key.substring(method.length() + 1);
 
-            if (matches(routePath, path)) {
+            if (matches(routePath, requestPath)) {
                 return route.getValue();
             }
         }
@@ -104,7 +106,6 @@ public class Router implements HttpHandler {
                 if (requestPart == null || requestPart.isBlank()) {
                     return false;
                 }
-
                 continue;
             }
 
