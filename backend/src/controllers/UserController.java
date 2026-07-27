@@ -38,4 +38,14 @@ public class UserController {
 
         JsonResponse.ok(exchange, responseJson);
     }
+
+    public void getMyBookings(HttpExchange exchange) throws IOException {
+        Optional<AuthUser> authUser = AuthMiddleware.requireAuth(exchange);
+        if (authUser.isEmpty()) {
+            return;
+        }
+
+        String responseJson = userService.getMyBookings(authUser.get().userId());
+        JsonResponse.ok(exchange, responseJson);
+    }
 }

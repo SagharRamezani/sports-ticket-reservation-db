@@ -2,10 +2,13 @@ package repositories;
 
 import db.Database;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserRepository {
     public boolean existsByEmailOrPhone(String email, String phoneNumber) {
@@ -236,6 +239,53 @@ public class UserRepository {
         }
     }
 
+    public List<BookingHistoryResult> findBookingsByUserId(long userId) {
+        String sql = """
+                SELECT
+                    r.reservation_id,
+                    r.reservation_status,
+                    r.reserved_at,
+                    r.expires_at,
+                    r.confirmed_at,
+                    t.ticket_id,
+                    t.ticket_status,
+                    t.price,
+                    COALESCE(tc.category_name, '') AS category_name,
+                    m.match_id,
+                    COALESCE(m.match_title, CONCAT('Match #', m.match_id)) AS match_title,
+                    m.match_start_time,
+                    COALESCE(v.venue_name, '') AS venue_name,
+                    p.payment_id,
+                    p.payment_status,
+                    p.amount AS payment_amount
+                FROM reservations r
+                JOIN tickets t ON r.ticket_id = t.ticket_id
+                JOIN matches m ON t.match_id = m.match_id
+                LEFT JOIN ticket_categories tc ON t.ticket_category_id = tc.ticket_category_id
+                LEFT JOIN venues v ON m.venue_id = v.venue_id
+                LEFT JOIN payments p ON r.reservation_id = p.reservation_id
+                WHERE r.user_id = ?
+                ORDER BY r.reserved_at DESC, r.reservation_id DESC
+                """;
+
+        List<BookingHistoryResult> bookings = new ArrayList<>();
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    bookings.add(mapBookingHistory(resultSet));
+                }
+            }
+
+            return bookings;
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Could not load user bookings", ex);
+        }
+    }
+
     private AuthUserResult mapAuthUser(ResultSet resultSet) throws SQLException {
         return new AuthUserResult(
                 resultSet.getLong("user_id"),
@@ -267,6 +317,38 @@ public class UserRepository {
                         ? ""
                         : resultSet.getTimestamp("created_at").toLocalDateTime().toString()
         );
+    }
+
+    private BookingHistoryResult mapBookingHistory(ResultSet resultSet) throws SQLException {
+        long paymentIdValue = resultSet.getLong("payment_id");
+        Long paymentId = resultSet.wasNull() ? null : paymentIdValue;
+
+        return new BookingHistoryResult(
+                resultSet.getLong("reservation_id"),
+                resultSet.getString("reservation_status"),
+                timestampToString(resultSet, "reserved_at"),
+                timestampToString(resultSet, "expires_at"),
+                timestampToString(resultSet, "confirmed_at"),
+                resultSet.getLong("ticket_id"),
+                resultSet.getString("ticket_status"),
+                resultSet.getBigDecimal("price"),
+                resultSet.getString("category_name"),
+                resultSet.getLong("match_id"),
+                resultSet.getString("match_title"),
+                timestampToString(resultSet, "match_start_time"),
+                resultSet.getString("venue_name"),
+                paymentId,
+                resultSet.getString("payment_status"),
+                resultSet.getBigDecimal("payment_amount")
+        );
+    }
+
+    private String timestampToString(ResultSet resultSet, String columnName) throws SQLException {
+        if (resultSet.getTimestamp(columnName) == null) {
+            return "";
+        }
+
+        return resultSet.getTimestamp(columnName).toLocalDateTime().toString();
     }
 
     public record CreateUserRequest(
@@ -312,6 +394,26 @@ public class UserRepository {
             String cityName,
             boolean active,
             String createdAt
+    ) {
+    }
+
+    public record BookingHistoryResult(
+            long reservationId,
+            String reservationStatus,
+            String reservedAt,
+            String expiresAt,
+            String confirmedAt,
+            long ticketId,
+            String ticketStatus,
+            BigDecimal price,
+            String categoryName,
+            long matchId,
+            String matchTitle,
+            String matchStartTime,
+            String venueName,
+            Long paymentId,
+            String paymentStatus,
+            BigDecimal paymentAmount
     ) {
     }
 }
