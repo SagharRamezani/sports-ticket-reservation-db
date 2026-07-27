@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings - Sports Tickets</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="index.html">
+            <span class="brand-mark">ST</span>
+            <span>Sports Tickets</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="tickets.html">Tickets</a>
+            <a href="bookings.html" class="active">Bookings</a>
+            <a href="profile.html">Profile</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-outline" href="login.html">Login</a>
+            <button class="btn btn-ghost" id="logoutButton" type="button">Logout</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="page-header">
+        <div class="container">
+            <p class="eyebrow">My Bookings</p>
+            <h1>Reservations, payment and cancellation</h1>
+            <p>View booking history, pay pending reservations, check cancellation penalty, and cancel reservations.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div id="bookingsMessage" class="alert hidden"></div>
+
+            <div class="panel">
+                <div class="split-panel" style="grid-template-columns: minmax(0, 1fr) auto;">
+                    <div>
+                        <p class="eyebrow">Booking History</p>
+                        <h2 id="bookingsTitle">Your reservations</h2>
+                        <p id="bookingsMeta">Use the button to load booking history.</p>
+                    </div>
+
+                    <div class="inline-actions">
+                        <button class="btn btn-primary" id="loadBookingsButton" type="button">Load bookings</button>
+                        <button class="btn btn-secondary" id="loadMockBookingsButton" type="button">Load mock bookings</button>
+                    </div>
+                </div>
+
+                <div id="bookingsList" class="booking-grid" style="margin-top: 18px;"></div>
+            </div>
+
+            <section class="panel">
+                <p class="eyebrow">Manual Actions</p>
+                <h2>Payment and cancellation tools</h2>
+
+                <div class="form-grid">
+                    <div class="form-row">
+                        <label for="manualReservationId">Reservation ID</label>
+                        <input id="manualReservationId" type="number" min="1" placeholder="Reservation ID">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="manualPaymentAmount">Payment amount</label>
+                        <input id="manualPaymentAmount" type="number" min="0" placeholder="Amount">
+                    </div>
+
+                    <div class="form-row">
+                        <label for="manualPaymentMethod">Payment method</label>
+                        <select id="manualPaymentMethod">
+                            <option value="CARD">Card</option>
+                            <option value="WALLET">Wallet</option>
+                            <option value="MOCK">Mock payment</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="manualCancelReason">Cancel reason</label>
+                        <input id="manualCancelReason" type="text" placeholder="User requested cancellation">
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 16px;">
+                    <button class="btn btn-primary" id="manualPayButton" type="button">Pay reservation</button>
+                    <button class="btn btn-outline" id="manualPenaltyButton" type="button">Check penalty</button>
+                    <button class="btn btn-danger" id="manualCancelButton" type="button">Cancel reservation</button>
+                </div>
+
+                <pre id="bookingActionResult" class="result-box">No action yet.</pre>
+            </section>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-content">
+        <p>Sports Ticket Reservation System - Database Project Phase 4</p>
+        <p>Bookings UI by Shamim</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/reservations.js"></script>
+</body>
+</html>
