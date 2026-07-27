@@ -1,5 +1,8 @@
 package services;
 
+import cache.MemoryCacheService;
+import cache.RedisCacheService;
+
 import java.util.Optional;
 
 public interface CacheService {
@@ -21,5 +24,15 @@ public interface CacheService {
 
     default boolean contains(String key) {
         return get(key).isPresent();
+    }
+
+    static CacheService defaultCache() {
+        RedisCacheService redisCacheService = RedisCacheService.fromEnvironment();
+
+        if (redisCacheService.isRedisAvailable()) {
+            return redisCacheService;
+        }
+
+        return new MemoryCacheService();
     }
 }
