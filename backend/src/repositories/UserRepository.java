@@ -32,6 +32,35 @@ public class UserRepository {
         }
     }
 
+    public boolean profileContactExistsForAnotherUser(long userId, String email, String phoneNumber) {
+        String sql = """
+                SELECT 1
+                FROM users
+                WHERE user_id <> ?
+                  AND (
+                    (? IS NOT NULL AND email = ?)
+                    OR
+                    (? IS NOT NULL AND phone_number = ?)
+                  )
+                LIMIT 1
+                """;
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            statement.setString(2, email);
+            statement.setString(3, email);
+            statement.setString(4, phoneNumber);
+            statement.setString(5, phoneNumber);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Could not check duplicate profile contact", ex);
+        }
+    }
+
     public AuthUserResult createUser(CreateUserRequest request) {
         String sql = """
                 INSERT INTO users
@@ -130,6 +159,83 @@ public class UserRepository {
         }
     }
 
+    public UserProfileResult findProfileById(long userId) {
+        String sql = """
+                SELECT
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.phone_number,
+                    r.role_code,
+                    u.city_id,
+                    c.city_name,
+                    u.is_active,
+                    u.created_at
+                FROM users u
+                JOIN roles r ON u.role_id = r.role_id
+                LEFT JOIN cities c ON u.city_id = c.city_id
+                WHERE u.user_id = ?
+                LIMIT 1
+                """;
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new IllegalArgumentException("User profile not found");
+                }
+
+                return mapUserProfile(resultSet);
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Could not load user profile", ex);
+        }
+    }
+
+    public UserProfileResult updateProfile(UpdateProfileRequest request) {
+        String sql = """
+                UPDATE users
+                SET
+                    first_name = COALESCE(?, first_name),
+                    last_name = COALESCE(?, last_name),
+                    email = COALESCE(?, email),
+                    phone_number = COALESCE(?, phone_number),
+                    city_id = COALESCE(?, city_id),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = ?
+                RETURNING user_id
+                """;
+
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, request.firstName());
+            statement.setString(2, request.lastName());
+            statement.setString(3, request.email());
+            statement.setString(4, request.phoneNumber());
+
+            if (request.cityId() == null) {
+                statement.setObject(5, null);
+            } else {
+                statement.setLong(5, request.cityId());
+            }
+
+            statement.setLong(6, request.userId());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new IllegalArgumentException("User profile not found");
+                }
+            }
+
+            return findProfileById(request.userId());
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Could not update user profile", ex);
+        }
+    }
+
     private AuthUserResult mapAuthUser(ResultSet resultSet) throws SQLException {
         return new AuthUserResult(
                 resultSet.getLong("user_id"),
@@ -140,6 +246,26 @@ public class UserRepository {
                 resultSet.getString("password_hash"),
                 resultSet.getString("role_code"),
                 resultSet.getBoolean("is_active")
+        );
+    }
+
+    private UserProfileResult mapUserProfile(ResultSet resultSet) throws SQLException {
+        long cityIdValue = resultSet.getLong("city_id");
+        Long cityId = resultSet.wasNull() ? null : cityIdValue;
+
+        return new UserProfileResult(
+                resultSet.getLong("user_id"),
+                resultSet.getString("first_name"),
+                resultSet.getString("last_name"),
+                resultSet.getString("email"),
+                resultSet.getString("phone_number"),
+                resultSet.getString("role_code"),
+                cityId,
+                resultSet.getString("city_name"),
+                resultSet.getBoolean("is_active"),
+                resultSet.getTimestamp("created_at") == null
+                        ? ""
+                        : resultSet.getTimestamp("created_at").toLocalDateTime().toString()
         );
     }
 
@@ -162,6 +288,30 @@ public class UserRepository {
             String passwordHash,
             String roleCode,
             boolean active
+    ) {
+    }
+
+    public record UpdateProfileRequest(
+            long userId,
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            Long cityId
+    ) {
+    }
+
+    public record UserProfileResult(
+            long userId,
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            String roleCode,
+            Long cityId,
+            String cityName,
+            boolean active,
+            String createdAt
     ) {
     }
 }
