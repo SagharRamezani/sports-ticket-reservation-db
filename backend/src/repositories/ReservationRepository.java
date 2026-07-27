@@ -93,7 +93,8 @@ public class ReservationRepository {
 
     public CancellationPenalty calculateCancellationPenalty(long requesterUserId, String requesterRole, long reservationId) {
         ReservationPenaltyData data = findReservationPenaltyData(requesterUserId, requesterRole, reservationId);
-        BigDecimal penaltyPercent = findPenaltyPercent(data.matchId(), data.ticketCategoryId());
+        long hoursBeforeMatch = Math.max(0, data.hoursBeforeMatch());
+        BigDecimal penaltyPercent = findPenaltyPercent(data.matchId(), data.ticketCategoryId(), hoursBeforeMatch);
 
         BigDecimal penaltyAmount = data.price()
                 .multiply(penaltyPercent)
@@ -108,6 +109,7 @@ public class ReservationRepository {
                 data.reservationId(),
                 data.ticketId(),
                 data.price(),
+                hoursBeforeMatch,
                 penaltyPercent,
                 penaltyAmount,
                 refundableAmount,
@@ -115,7 +117,12 @@ public class ReservationRepository {
         );
     }
 
-    public CancelReservationResult cancelReservation(long requesterUserId, String requesterRole, long reservationId) {
+    public CancelReservationResult cancelReservation(
+            long requesterUserId,
+            String requesterRole,
+            long reservationId,
+            String cancellationReason
+    ) {
         String lockReservationSql = """
                 SELECT
                     r.reservation_id,
@@ -138,7 +145,7 @@ public class ReservationRepository {
                 SELECT payment_id, amount
                 FROM payments
                 WHERE reservation_id = ?
-                  AND payment_status IN ('SUCCESS', 'REFUNDED')
+                  AND payment_status = 'SUCCESS'
                 ORDER BY created_at DESC
                 LIMIT 1
                 """;
@@ -147,7 +154,7 @@ public class ReservationRepository {
                 UPDATE reservations
                 SET reservation_status = 'CANCELLED',
                     cancelled_at = CURRENT_TIMESTAMP,
-                    cancellation_reason = 'Cancelled through phase 3 reservation API'
+                    cancellation_reason = ?
                 WHERE reservation_id = ?
                 """;
 
@@ -168,7 +175,7 @@ public class ReservationRepository {
                 INSERT INTO refunds
                     (reservation_id, payment_id, amount, penalty_amount, refund_status, requested_at, processed_at, description)
                 VALUES
-                    (?, ?, ?, ?, 'PROCESSED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Refund created by cancellation API')
+                    (?, ?, ?, ?, 'PROCESSED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)
                 """;
 
         try (Connection connection = Database.getConnection()) {
@@ -208,7 +215,8 @@ public class ReservationRepository {
                     }
                 }
 
-                BigDecimal penaltyPercent = findPenaltyPercent(connection, data.matchId(), data.ticketCategoryId());
+                long hoursBeforeMatch = Math.max(0, data.hoursBeforeMatch());
+                BigDecimal penaltyPercent = findPenaltyPercent(connection, data.matchId(), data.ticketCategoryId(), hoursBeforeMatch);
                 BigDecimal penaltyAmount = data.price()
                         .multiply(penaltyPercent)
                         .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -233,7 +241,8 @@ public class ReservationRepository {
                 }
 
                 try (PreparedStatement statement = connection.prepareStatement(updateReservationSql)) {
-                    statement.setLong(1, reservationId);
+                    statement.setString(1, cancellationReason);
+                    statement.setLong(2, reservationId);
                     statement.executeUpdate();
                 }
 
@@ -255,6 +264,7 @@ public class ReservationRepository {
                         statement.setLong(2, paymentId);
                         statement.setBigDecimal(3, refundAmount);
                         statement.setBigDecimal(4, penaltyAmount);
+                        statement.setString(5, "Refund created by cancellation API. Reason: " + cancellationReason);
                         statement.executeUpdate();
                     }
                 }
@@ -266,6 +276,7 @@ public class ReservationRepository {
                         data.ticketId(),
                         "CANCELLED",
                         "CANCELLED",
+                        cancellationReason,
                         refundCreated,
                         refundAmount,
                         penaltyAmount
@@ -388,20 +399,26 @@ public class ReservationRepository {
         }
     }
 
-    private BigDecimal findPenaltyPercent(long matchId, long ticketCategoryId) {
+    private BigDecimal findPenaltyPercent(long matchId, long ticketCategoryId, long hoursBeforeMatch) {
         try (Connection connection = Database.getConnection()) {
-            return findPenaltyPercent(connection, matchId, ticketCategoryId);
+            return findPenaltyPercent(connection, matchId, ticketCategoryId, hoursBeforeMatch);
         } catch (SQLException ex) {
             throw new IllegalStateException("Could not find cancellation policy", ex);
         }
     }
 
-    private BigDecimal findPenaltyPercent(Connection connection, long matchId, long ticketCategoryId) throws SQLException {
+    private BigDecimal findPenaltyPercent(
+            Connection connection,
+            long matchId,
+            long ticketCategoryId,
+            long hoursBeforeMatch
+    ) throws SQLException {
         String sql = """
                 SELECT penalty_percent
                 FROM cancellation_policies
                 WHERE (match_id = ? OR match_id IS NULL)
                   AND (ticket_category_id = ? OR ticket_category_id IS NULL)
+                  AND hours_before_match <= ?
                 ORDER BY
                     CASE WHEN match_id = ? THEN 0 ELSE 1 END,
                     CASE WHEN ticket_category_id = ? THEN 0 ELSE 1 END,
@@ -412,8 +429,9 @@ public class ReservationRepository {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, matchId);
             statement.setLong(2, ticketCategoryId);
-            statement.setLong(3, matchId);
-            statement.setLong(4, ticketCategoryId);
+            statement.setLong(3, hoursBeforeMatch);
+            statement.setLong(4, matchId);
+            statement.setLong(5, ticketCategoryId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -458,6 +476,7 @@ public class ReservationRepository {
             long reservationId,
             long ticketId,
             BigDecimal ticketPrice,
+            long hoursBeforeMatch,
             BigDecimal penaltyPercent,
             BigDecimal penaltyAmount,
             BigDecimal refundableAmount,
@@ -470,6 +489,7 @@ public class ReservationRepository {
             long ticketId,
             String reservationStatus,
             String ticketStatus,
+            String cancellationReason,
             boolean refundCreated,
             BigDecimal refundAmount,
             BigDecimal penaltyAmount

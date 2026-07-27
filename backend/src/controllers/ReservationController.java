@@ -52,10 +52,13 @@ public class ReservationController {
         }
 
         long reservationId = RequestUtils.pathLong(exchange, 2, "reservationId");
+        String requestBody = RequestUtils.readBody(exchange);
+
         String responseJson = reservationService.cancelReservation(
                 authUser.get().userId(),
                 authUser.get().roleCode(),
-                reservationId
+                reservationId,
+                requestBody
         );
 
         JsonResponse.ok(exchange, responseJson);

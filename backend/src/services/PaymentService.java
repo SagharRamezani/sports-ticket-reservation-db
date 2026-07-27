@@ -81,6 +81,15 @@ public class PaymentService {
         return json.toString();
     }
 
+    public String buildRefundSummaryJson(boolean refundCreated, BigDecimal refundAmount, BigDecimal penaltyAmount) {
+        return "{"
+                + "\"refundCreated\":" + refundCreated + ","
+                + "\"refundAmount\":" + money(refundAmount) + ","
+                + "\"penaltyAmount\":" + money(penaltyAmount) + ","
+                + "\"refundStatus\":\"" + (refundCreated ? "PROCESSED" : "NOT_REQUIRED") + "\""
+                + "}";
+    }
+
     private String money(BigDecimal value) {
         if (value == null) {
             return "0.00";
