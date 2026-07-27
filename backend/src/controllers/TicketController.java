@@ -2,19 +2,27 @@ package controllers;
 
 import com.sun.net.httpserver.HttpExchange;
 import http.JsonResponse;
+import services.SearchService;
 import services.TicketService;
 
 import java.io.IOException;
 
 public class TicketController {
     private final TicketService ticketService;
+    private final SearchService searchService;
 
     public TicketController() {
         this.ticketService = new TicketService();
+        this.searchService = new SearchService();
     }
 
     public void listTickets(HttpExchange exchange) throws IOException {
         String responseJson = ticketService.listTickets();
+        JsonResponse.ok(exchange, responseJson);
+    }
+
+    public void searchTickets(HttpExchange exchange) throws IOException {
+        String responseJson = searchService.searchTickets(exchange.getRequestURI().getRawQuery());
         JsonResponse.ok(exchange, responseJson);
     }
 
