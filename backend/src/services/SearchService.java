@@ -1,5 +1,6 @@
 package services;
 
+import elastic.ElasticTicketSearch;
 import http.JsonResponse;
 import repositories.TicketRepository;
 import repositories.TicketRepository.TicketResult;
@@ -16,9 +17,11 @@ import java.util.Map;
 
 public class SearchService {
     private final TicketRepository ticketRepository;
+    private final ElasticTicketSearch elasticTicketSearch;
 
     public SearchService() {
         this.ticketRepository = new TicketRepository();
+        this.elasticTicketSearch = new ElasticTicketSearch();
     }
 
     public String searchTickets(String rawQuery) {
@@ -37,23 +40,46 @@ public class SearchService {
 
         validateFilter(filter);
 
-        List<TicketResult> tickets = ticketRepository.searchTickets(filter);
+        SearchResult searchResult = searchWithElasticFallback(filter);
 
         StringBuilder json = new StringBuilder();
         json.append("{\"success\":true,");
+        json.append("\"searchEngine\":\"").append(JsonResponse.escape(searchResult.searchEngine())).append("\",");
+        json.append("\"fallbackUsed\":").append(searchResult.fallbackUsed()).append(",");
         json.append("\"filters\":").append(buildFilterJson(filter)).append(",");
         json.append("\"data\":[");
 
-        for (int i = 0; i < tickets.size(); i++) {
+        for (int i = 0; i < searchResult.tickets().size(); i++) {
             if (i > 0) {
                 json.append(",");
             }
 
-            json.append(buildTicketJson(tickets.get(i)));
+            json.append(buildTicketJson(searchResult.tickets().get(i)));
         }
 
-        json.append("],\"count\":").append(tickets.size()).append("}");
+        json.append("],\"count\":").append(searchResult.tickets().size()).append("}");
         return json.toString();
+    }
+
+    private SearchResult searchWithElasticFallback(TicketSearchFilter filter) {
+        try {
+            if (elasticTicketSearch.isAvailable()) {
+                List<Long> ticketIds = elasticTicketSearch.searchTicketIds(filter);
+
+                if (!ticketIds.isEmpty()) {
+                    List<TicketResult> tickets = ticketRepository.findTicketsByIds(ticketIds);
+                    return new SearchResult(tickets, "elasticsearch", false);
+                }
+
+                return new SearchResult(List.of(), "elasticsearch", false);
+            }
+        } catch (RuntimeException ex) {
+            // Elasticsearch is optional in phase 4.
+            // If it is down, misconfigured, or returns an invalid response, SQL search must still work.
+        }
+
+        List<TicketResult> tickets = ticketRepository.searchTickets(filter);
+        return new SearchResult(tickets, "sql", true);
     }
 
     private void validateFilter(TicketSearchFilter filter) {
@@ -192,5 +218,12 @@ public class SearchService {
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException("UTF-8 is not supported", ex);
         }
+    }
+
+    private record SearchResult(
+            List<TicketResult> tickets,
+            String searchEngine,
+            boolean fallbackUsed
+    ) {
     }
 }
