@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sports Tickets</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-content">
+        <a class="brand" href="index.html">
+            <span class="brand-mark">ST</span>
+            <span>Sports Tickets</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+            <a href="index.html">Home</a>
+            <a href="tickets.html">Tickets</a>
+            <a href="bookings.html">Bookings</a>
+            <a href="profile.html">Profile</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-outline active" href="login.html">Login</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="page-header">
+        <div class="container">
+            <p class="eyebrow">Authentication</p>
+            <h1>Login, Signup and OTP</h1>
+            <p>Use backend authentication APIs or continue with mock mode when the backend is not running.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="panel">
+                <div class="inline-actions">
+                    <button class="btn btn-primary" type="button" data-auth-tab="login">Login</button>
+                    <button class="btn btn-outline" type="button" data-auth-tab="signup">Signup</button>
+                    <button class="btn btn-outline" type="button" data-auth-tab="otp">OTP</button>
+                </div>
+
+                <div id="authMessage" class="alert hidden"></div>
+            </div>
+
+            <div class="card-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                <section class="auth-card panel" id="loginPanel">
+                    <p class="eyebrow">Step 1</p>
+                    <h2>Login</h2>
+                    <form id="loginForm">
+                        <div class="form-row">
+                            <label for="loginEmail">Email</label>
+                            <input id="loginEmail" name="email" type="email" placeholder="user@example.com" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="loginPassword">Password</label>
+                            <input id="loginPassword" name="password" type="password" placeholder="Password" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="submit">Login</button>
+                            <button class="btn btn-ghost" type="button" id="fillLoginDemo">Fill demo</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="auth-card panel" id="signupPanel">
+                    <p class="eyebrow">Step 2</p>
+                    <h2>Signup</h2>
+                    <form id="signupForm">
+                        <div class="form-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                            <div class="form-row">
+                                <label for="signupFirstName">First name</label>
+                                <input id="signupFirstName" name="firstName" type="text" placeholder="Sara" required>
+                            </div>
+
+                            <div class="form-row">
+                                <label for="signupLastName">Last name</label>
+                                <input id="signupLastName" name="lastName" type="text" placeholder="Ahmadi" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="signupEmail">Email</label>
+                            <input id="signupEmail" name="email" type="email" placeholder="sara@example.com" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="signupPhone">Phone number</label>
+                            <input id="signupPhone" name="phoneNumber" type="tel" placeholder="09120000000" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="signupPassword">Password</label>
+                            <input id="signupPassword" name="password" type="password" placeholder="Password" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="submit">Create account</button>
+                            <button class="btn btn-ghost" type="button" id="fillSignupDemo">Fill demo</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="auth-card panel" id="otpPanel">
+                    <p class="eyebrow">Step 3</p>
+                    <h2>OTP Verification</h2>
+                    <form id="requestOtpForm">
+                        <div class="form-row">
+                            <label for="otpPhone">Phone number</label>
+                            <input id="otpPhone" name="phoneNumber" type="tel" placeholder="09120000000" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-secondary" type="submit">Request OTP</button>
+                        </div>
+                    </form>
+
+                    <hr style="border: none; border-top: 1px solid var(--color-border); margin: 18px 0;">
+
+                    <form id="verifyOtpForm">
+                        <div class="form-row">
+                            <label for="verifyPhone">Phone number</label>
+                            <input id="verifyPhone" name="phoneNumber" type="tel" placeholder="09120000000" required>
+                        </div>
+
+                        <div class="form-row">
+                            <label for="otpCode">OTP code</label>
+                            <input id="otpCode" name="otpCode" type="text" placeholder="123456" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" type="submit">Verify OTP</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+            <div class="panel">
+                <p class="eyebrow">Current session</p>
+                <h2>Stored Authentication Data</h2>
+                <pre id="sessionBox" class="result-box">No session loaded.</pre>
+                <div class="inline-actions">
+                    <button class="btn btn-outline" id="refreshSessionButton" type="button">Refresh session</button>
+                    <button class="btn btn-danger" id="clearSessionButton" type="button">Clear token</button>
+                    <button class="btn btn-secondary" id="mockLoginButton" type="button">Use mock login</button>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-content">
+        <p>Sports Ticket Reservation System - Database Project Phase 4</p>
+        <p>Auth UI by Shamim</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
